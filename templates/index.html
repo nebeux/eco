@@ -193,18 +193,114 @@
   .carbon-score-display .big { font-size: 48px; font-weight: 500; font-family: var(--mono); color: var(--green-dark); letter-spacing: -2px; }
   .carbon-score-display .lbl { font-size: 12px; color: var(--green); }
 
+  /* ── vocab slideshow ── */
+  .vocab-section { margin: 0 0 5rem; animation: fadeUp 0.4s ease 0.1s both; }
+  .vocab-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .vocab-tab {
+    padding: 6px 16px;
+    border-radius: 99px;
+    border: 0.5px solid var(--border);
+    background: var(--card-bg);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .vocab-tab:hover { border-color: var(--green); color: var(--green-dark); }
+  .vocab-tab.active { background: var(--green-light); border-color: #9FE1CB; color: var(--green-dark); }
+  .vocab-card {
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    display: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .vocab-card.active { display: block; animation: fadeUp 0.25s ease both; }
+  .vocab-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .vocab-card.e::before { background: var(--green); }
+  .vocab-card.s::before { background: var(--blue); }
+  .vocab-card.g::before { background: var(--amber); }
+  .vocab-card.carbon::before { background: linear-gradient(90deg, var(--green), var(--amber)); }
+  .vocab-card.esg::before { background: linear-gradient(90deg, var(--green), var(--blue), var(--amber)); }
+  .vocab-card.pe::before { background: var(--blue); }
+  .vocab-card.beta::before { background: var(--amber); }
+  .vocab-card.divid::before { background: var(--green); }
+  .vocab-letter {
+    font-size: 56px;
+    font-weight: 500;
+    font-family: var(--mono);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    letter-spacing: -3px;
+  }
+  .vocab-card.e .vocab-letter { color: var(--green); }
+  .vocab-card.s .vocab-letter { color: var(--blue); }
+  .vocab-card.g .vocab-letter { color: var(--amber); }
+  .vocab-card.carbon .vocab-letter,
+  .vocab-card.esg .vocab-letter { color: var(--green); }
+  .vocab-card.pe .vocab-letter,
+  .vocab-card.beta .vocab-letter { color: var(--blue); }
+  .vocab-card.divid .vocab-letter { color: var(--green); }
+  .vocab-title { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 0.5rem; letter-spacing: -0.3px; }
+  .vocab-body { font-size: 14px; color: var(--muted); line-height: 1.8; max-width: 580px; }
+  .vocab-example {
+    margin-top: 1.25rem;
+    background: var(--bg-subtle);
+    border-left: 3px solid var(--green);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .vocab-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 0.5px solid var(--border);
+  }
+  .vocab-nav-btn {
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    background: var(--card-bg);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .vocab-nav-btn:hover { border-color: var(--green); color: var(--green-dark); }
+  .vocab-nav-btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+  .vocab-counter { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
   /* ── cta ── */
   .cta-section {
-  background: var(--card-bg);
-  border: 0.5px solid var(--border);
-  border-radius: 16px;
-  text-align: center;
-  padding: 4rem 2rem;
-  margin-bottom: 4rem;
-  animation: fadeUp 0.4s ease 0.1s both;
-}
-.cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 500; color: var(--text); letter-spacing: -0.5px; margin-bottom: 0.75rem; }
-.cta-section p { font-size: 14px; color: var(--muted); margin-bottom: 2rem; line-height: 1.7; }
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #1a1a18;
+    border-radius: 16px;
+    margin-bottom: 4rem;
+    animation: fadeUp 0.4s ease 0.1s both;
+  }
+  .cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 500; color: #ffffff; letter-spacing: -0.5px; margin-bottom: 0.75rem; }
+  .cta-section p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 2rem; line-height: 1.7; }
   .cta-section .btn-primary { background: var(--green); font-size: 15px; padding: 14px 36px; }
   .cta-section .btn-primary:hover { background: #25c48f; }
 
@@ -299,9 +395,122 @@
     </div>
   </div>
 
-</div>
+  <!-- vocab slideshow -->
+  <div style="text-align:center;margin-bottom:0.5rem;">
+    <div class="section-title">Learn the language</div>
+    <div class="section-heading">Key investing terms, explained</div>
+  </div>
 
-<!-- cta -->
+  <div class="vocab-section">
+    <div class="vocab-tabs">
+      <button class="vocab-tab active" onclick="showVocab(0)">E</button>
+      <button class="vocab-tab" onclick="showVocab(1)">S</button>
+      <button class="vocab-tab" onclick="showVocab(2)">G</button>
+      <button class="vocab-tab" onclick="showVocab(3)">ESG</button>
+      <button class="vocab-tab" onclick="showVocab(4)">Carbon Score</button>
+      <button class="vocab-tab" onclick="showVocab(5)">P/E Ratio</button>
+      <button class="vocab-tab" onclick="showVocab(6)">Beta</button>
+      <button class="vocab-tab" onclick="showVocab(7)">Dividend</button>
+    </div>
+
+    <div class="vocab-card e active" id="vocab-0">
+      <div class="vocab-letter">E</div>
+      <div class="vocab-title">Environmental</div>
+      <div class="vocab-body">The E in ESG measures how a company interacts with the natural world. This includes its carbon emissions, energy use, water consumption, waste management, and how it's preparing for climate change. A high environmental score means the company is actively reducing its footprint.</div>
+      <div class="vocab-example">💡 Example: A company that runs its data centres on 100% renewable energy scores higher on E than one powered by coal.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" disabled>← Previous</button>
+        <span class="vocab-counter">1 / 8</span>
+        <button class="vocab-nav-btn" onclick="showVocab(1)">Next →</button>
+      </div>
+    </div>
+
+    <div class="vocab-card s" id="vocab-1">
+      <div class="vocab-letter">S</div>
+      <div class="vocab-title">Social</div>
+      <div class="vocab-body">The S covers how a company treats people — its employees, suppliers, customers, and the communities it operates in. This includes fair wages, workplace safety, diversity and inclusion, data privacy, and community investment. Companies with strong social scores tend to have lower turnover and fewer scandals.</div>
+      <div class="vocab-example">💡 Example: A retailer that pays living wages and offers healthcare to part-time workers scores better on S than one that doesn't.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" onclick="showVocab(0)">← Previous</button>
+        <span class="vocab-counter">2 / 8</span>
+        <button class="vocab-nav-btn" onclick="showVocab(2)">Next →</button>
+      </div>
+    </div>
+
+    <div class="vocab-card g" id="vocab-2">
+      <div class="vocab-letter">G</div>
+      <div class="vocab-title">Governance</div>
+      <div class="vocab-body">Governance looks at how a company is run at the top. It covers board composition, executive pay, shareholder rights, transparency, and anti-corruption policies. Good governance means the company is accountable and well-managed — which tends to mean fewer nasty surprises for investors.</div>
+      <div class="vocab-example">💡 Example: A company where the CEO doesn't also serve as board chair, and where executive pay is tied to long-term performance, scores well on G.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" onclick="showVocab(1)">← Previous</button>
+        <span class="vocab-counter">3 / 8</span>
+        <button class="vocab-nav-btn" onclick="showVocab(3)">Next →</button>
+      </div>
+    </div>
+
+    <div class="vocab-card esg" id="vocab-3">
+      <div class="vocab-letter">ESG</div>
+      <div class="vocab-title">ESG Score</div>
+      <div class="vocab-body">ESG stands for Environmental, Social, and Governance. Together these three dimensions give a picture of how responsible and sustainable a company is beyond just its financial performance. Investors use ESG scores to find companies that are less likely to blow up from scandals, regulation, or climate risk — and more likely to be around in 20 years.</div>
+      <div class="vocab-example">💡 Example: A company can be highly profitable but have a low ESG score if it pollutes heavily, treats workers poorly, or has a corrupt board.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" onclick="showVocab(2)">← Previous</button>
+        <span class="vocab-counter">4 / 8</span>
+        <button class="vocab-nav-btn" onclick="showVocab(4)">Next →</button>
+      </div>
+    </div>
+
+    <div class="vocab-card carbon" id="vocab-4">
+      <div class="vocab-letter">CO₂</div>
+      <div class="vocab-title">Carbon Score</div>
+      <div class="vocab-body">A carbon score measures how much a company contributes to greenhouse gas emissions. It covers Scope 1 (direct emissions from their own operations), Scope 2 (emissions from the energy they buy), and Scope 3 (the full supply chain). In Eco, a higher carbon score is better — it means lower impact on the climate.</div>
+      <div class="vocab-example">💡 Example: A clean energy company that produces solar panels might have a 90/100 carbon score. An oil refinery might score 15/100.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" onclick="showVocab(3)">← Previous</button>
+        <span class="vocab-counter">5 / 8</span>
+        <button class="vocab-nav-btn" onclick="showVocab(5)">Next →</button>
+      </div>
+    </div>
+
+    <div class="vocab-card pe" id="vocab-5">
+      <div class="vocab-letter">P/E</div>
+      <div class="vocab-title">Price-to-Earnings Ratio</div>
+      <div class="vocab-body">The P/E ratio compares a company's stock price to how much profit it makes per share. A high P/E means investors are paying a lot for each dollar of earnings — usually because they expect strong future growth. A low P/E can mean the stock is cheap, or that the company's growth prospects are weak. There's no universally "good" P/E — it depends on the industry.</div>
+      <div class="vocab-example">💡 Example: If a stock costs $100 and earns $5 per share, the P/E is 20. Tech companies often have P/Es above 30; utilities might sit around 15.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" onclick="showVocab(4)">← Previous</button>
+        <span class="vocab-counter">6 / 8</span>
+        <button class="vocab-nav-btn" onclick="showVocab(6)">Next →</button>
+      </div>
+    </div>
+
+    <div class="vocab-card beta" id="vocab-6">
+      <div class="vocab-letter">β</div>
+      <div class="vocab-title">Beta</div>
+      <div class="vocab-body">Beta measures how volatile a stock is relative to the overall market. A beta of 1 means it moves in line with the market. Above 1 means it swings more — higher potential returns but also higher risk. Below 1 means it's more stable, but usually with lower upside. Negative beta stocks (rare) tend to move opposite to the market.</div>
+      <div class="vocab-example">💡 Example: A beta of 1.5 means if the market drops 10%, this stock tends to drop 15%. If the market rises 10%, it might rise 15%.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" onclick="showVocab(5)">← Previous</button>
+        <span class="vocab-counter">7 / 8</span>
+        <button class="vocab-nav-btn" onclick="showVocab(7)">Next →</button>
+      </div>
+    </div>
+
+    <div class="vocab-card divid" id="vocab-7">
+      <div class="vocab-letter">DIV</div>
+      <div class="vocab-title">Dividend</div>
+      <div class="vocab-body">A dividend is a regular cash payment a company makes to its shareholders from its profits. Not all companies pay dividends — fast-growing companies usually reinvest profits instead. Dividends are a sign of financial maturity and stability. The dividend yield tells you how much you earn annually as a percentage of the stock price.</div>
+      <div class="vocab-example">💡 Example: If a stock costs $100 and pays $3 per year in dividends, the yield is 3%. That's income on top of any price appreciation.</div>
+      <div class="vocab-nav">
+        <button class="vocab-nav-btn" onclick="showVocab(6)">← Previous</button>
+        <span class="vocab-counter">8 / 8</span>
+        <button class="vocab-nav-btn" disabled>Next →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
 <div class="cta-section">
   <h2>Give it a shot.</h2>
   <p>You've got $10,000 and 30+ stocks. See if you can grow your money without trashing your carbon score in the process.</p>
@@ -313,4 +522,13 @@
   Made for Hackonomics 2026 · All trades are simulated · Data from Finnhub
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function showVocab(index) {
+    document.querySelectorAll('.vocab-card').forEach((c, i) => c.classList.toggle('active', i === index));
+    document.querySelectorAll('.vocab-tab').forEach((t, i) => t.classList.toggle('active', i === index));
+  }
+</script>
 {% endblock %}

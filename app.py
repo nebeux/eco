@@ -158,15 +158,11 @@ def stocks():
 @app.route('/stock/<symbol>')
 def stock(symbol):
     symbol = symbol.upper()
-    try:
-        profile = get_company_profile(symbol)
-        quote   = get_quote(symbol)
-        metrics = get_metrics(symbol)
-        rec     = get_recommendations(symbol)
-        esg     = get_esg(symbol, profile.get("finnhubIndustry", "Technology"))
-    except Exception:
-        flash("Sorry, we hit our API call limit — try again in about 2 minutes and you should be fine :)", "api_limit")
-        return redirect(url_for('index'))
+    profile = get_company_profile(symbol)
+    quote   = get_quote(symbol)
+    metrics = get_metrics(symbol)
+    rec     = get_recommendations(symbol)
+    esg     = get_esg(symbol, profile.get("finnhubIndustry", "Technology"))
 
     # pass user's current holding for this stock if logged in
     user = get_current_user()
@@ -201,9 +197,33 @@ def leaderboard():
                 portfolio_value += h.shares * q['current']
             except:
                 portfolio_value += h.shares * h.avg_price
-        board.append({'username': u.username, 'value': round(portfolio_value, 2)})
-    board.sort(key=lambda x: x['value'], reverse=True)
-    return render_template('leaderboard.html', board=board)
+        gain     = round(portfolio_value - 10000, 2)
+        gain_pct = round((gain / 10000) * 100, 2)
+        carbon   = round(u.total_carbon_impact or 0, 1)
+        board.append({
+            'username': u.username,
+            'value':    round(portfolio_value, 2),
+            'gain':     gain,
+            'gain_pct': gain_pct,
+            'carbon':   carbon,
+        })
+    by_value  = sorted(board, key=lambda x: x['value'],  reverse=True)
+    by_carbon = sorted(board, key=lambda x: x['carbon'])
+
+    # combined eco_score: 60% returns, 40% carbon (both normalised to 0-100)
+    # carbon is inverted: lower impact = higher score
+    if board:
+        max_carbon = max(e['carbon'] for e in board) or 1
+        min_gain   = min(e['gain_pct'] for e in board)
+        max_gain   = max(e['gain_pct'] for e in board)
+        gain_range = (max_gain - min_gain) or 1
+        for e in board:
+            returns_norm = ((e['gain_pct'] - min_gain) / gain_range) * 100
+            carbon_norm  = (1 - e['carbon'] / max_carbon) * 100
+            e['eco_score'] = round(returns_norm * 0.6 + carbon_norm * 0.4, 1)
+    by_overall = sorted(board, key=lambda x: x.get('eco_score', 0), reverse=True)
+
+    return render_template('leaderboard.html', by_value=by_value, by_carbon=by_carbon, by_overall=by_overall)
 
 # ── api: portfolio data ───────────────────────────────
 @app.route('/api/portfolio')

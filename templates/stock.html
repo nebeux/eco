@@ -179,7 +179,7 @@
       {% if rec and rec.total > 0 %}
       <div class="rec-row"><span class="rec-label">Strong Buy</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.strong_buy / rec.total * 100)|round }}%;background:var(--green);"></div></div><span class="rec-count">{{ rec.strong_buy }}</span></div>
       <div class="rec-row"><span class="rec-label">Buy</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.buy / rec.total * 100)|round }}%;background:#5DCAA5;"></div></div><span class="rec-count">{{ rec.buy }}</span></div>
-      <div class="rec-row"><span class="rec-label">Hold</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.hold / rec.total * 100)|round }}%;background:var(--border);"></div></div><span class="rec-count">{{ rec.hold }}</span></div>
+      <div class="rec-row"><span class="rec-label">Hold</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.hold / rec.total * 100)|round }}%;background:#FF8C00;"></div></div><span class="rec-count">{{ rec.hold }}</span></div>
       <div class="rec-row"><span class="rec-label">Sell</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.sell / rec.total * 100)|round }}%;background:#F0997B;"></div></div><span class="rec-count">{{ rec.sell }}</span></div>
       <div class="rec-summary">
         <div class="rec-sum-item">

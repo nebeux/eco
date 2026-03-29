@@ -162,23 +162,39 @@ def stocks():
 @app.route('/stock/<symbol>')
 def stock(symbol):
     symbol = symbol.upper()
-    profile = get_company_profile(symbol)
-    quote   = get_quote(symbol)
-    metrics = get_metrics(symbol)
-    rec     = get_recommendations(symbol)
-    esg     = get_esg(symbol, profile.get("finnhubIndustry", "Technology"))
+    if '.' in symbol:
+        flash('Invalid stock symbol.', 'error')
+        return redirect(url_for('stocks'))
+    
+    try:
+        profile = get_company_profile(symbol)
+        quote   = get_quote(symbol)
+        
+        # if quote returns zeros it's an invalid symbol
+        if not quote or quote.get('current', 0) == 0:
+            flash(f'No data found for {symbol}. It may be delisted or invalid.', 'error')
+            return redirect(url_for('stocks'))
 
-    # pass user's current holding for this stock if logged in
-    user = get_current_user()
-    holding = None
-    if user:
-        holding = Holding.query.filter_by(user_id=user.id, symbol=symbol).first()
+        metrics = get_metrics(symbol)
+        rec     = get_recommendations(symbol)
+        esg     = ESG_SCORES.get(symbol, {"environmental": 50, "social": 50, "governance": 50, "carbon": 50})
 
-    return render_template('stock.html',
-        symbol=symbol, profile=profile, quote=quote,
-        metrics=metrics, rec=rec, esg=esg,
-        holding=holding, balance=user.balance if user else None
-    )
+        user    = get_current_user()
+        holding = None
+        if user:
+            holding = Holding.query.filter_by(user_id=user.id, symbol=symbol).first()
+
+        return render_template('stock.html',
+            symbol=symbol, profile=profile, quote=quote,
+            metrics=metrics, rec=rec, esg=esg,
+            holding=holding, balance=user.balance if user else None
+        )
+    except ZeroDivisionError:
+        flash(f'{symbol} returned invalid data. Please try another stock.', 'error')
+        return redirect(url_for('stocks'))
+    except Exception as e:
+        flash(f'Could not load {symbol} — {str(e)}', 'error')
+        return redirect(url_for('stocks'))
 
 @app.route('/portfolio')
 @login_required

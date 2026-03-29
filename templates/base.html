@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html data-theme="light">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eco</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -234,8 +235,31 @@
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
       </svg>
     </button>
+
+    <!-- hamburger (mobile only) -->
+    <div class="nav-hamburger" id="hamburger" onclick="openMobileMenu()">
+      <span></span><span></span><span></span>
+    </div>
   </div>
 </nav>
+
+<!-- mobile menu drawer -->
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-header">
+    <span class="logo-text">e<span style="color:var(--green);">co</span></span>
+    <button class="mobile-menu-close" onclick="closeMobileMenu()">&#x2715;</button>
+  </div>
+  <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}" onclick="closeMobileMenu()">Home</a>
+  <a href="{{ url_for('stocks') }}" class="{{ 'active' if request.endpoint in ['stocks', 'stock'] }}" onclick="closeMobileMenu()">Stocks</a>
+  <a href="{{ url_for('portfolio') }}" class="{{ 'active' if request.endpoint == 'portfolio' }}" onclick="closeMobileMenu()">Portfolio</a>
+  <a href="{{ url_for('leaderboard') }}" class="{{ 'active' if request.endpoint == 'leaderboard' }}" onclick="closeMobileMenu()">Leaderboard</a>
+  {% if session.get('user') %}
+    <div class="mobile-balance">Balance <strong>${{ nav_balance }}</strong></div>
+    <a href="{{ url_for('logout') }}" style="color:var(--red);margin-top:1rem;" onclick="closeMobileMenu()">Logout</a>
+  {% else %}
+    <a href="{{ url_for('login') }}" style="color:var(--green);margin-top:1rem;" onclick="closeMobileMenu()">Login</a>
+  {% endif %}
+</div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -321,6 +345,15 @@
 {% block content %}{% endblock %}
 
 <script>
+  function openMobileMenu() {
+    document.getElementById('mobileMenu').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobileMenu() {
+    document.getElementById('mobileMenu').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
   // persist preference across pages
   (function() {
     const saved = localStorage.getItem('eco-theme');

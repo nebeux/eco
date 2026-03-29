@@ -276,3 +276,172 @@ nav {
   display: inline-block;
 }
 .btn-secondary:hover { background: var(--bg-subtle); border-color: var(--muted); }
+
+/* ── mobile ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* navbar — hide center links, show hamburger */
+  nav { padding: 0 1rem; position: relative; }
+  .nav-links { display: none; }
+  .nav-right .balance { display: none; }
+  .nav-right { gap: 8px; }
+
+  /* hamburger button */
+  .nav-hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    background: var(--bg-subtle);
+  }
+  .nav-hamburger span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  /* mobile menu drawer */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--card-bg);
+    z-index: 200;
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  .mobile-menu-close {
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--muted);
+    background: none;
+    border: none;
+    padding: 4px 8px;
+  }
+  .mobile-menu a {
+    display: block;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    padding: 14px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .mobile-menu a.active { color: var(--green); }
+  .mobile-balance {
+    margin-top: 2rem;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--bg-subtle);
+    padding: 12px;
+    border-radius: 8px;
+  }
+  .mobile-balance strong { color: var(--text); font-weight: 500; }
+
+  /* page padding */
+  .page { padding: 1rem; }
+  .full-stock-page { margin: 12px; }
+
+  /* stock header stacks */
+  .stock-header { flex-direction: column; gap: 0.5rem; }
+  .stock-price-block { text-align: left; }
+  .stock-price { font-size: 26px; }
+
+  /* esg hero — stack to 1 col */
+  .esg-hero { grid-template-columns: 1fr; }
+
+  /* main grid — stack to single col */
+  .main-grid { grid-template-columns: 1fr; }
+  .main-grid > div:last-child { position: static !important; }
+  .buy-panel { position: static !important; }
+
+  /* stocks grid — 1 col on small screens */
+  .stocks-grid { grid-template-columns: 1fr !important; }
+
+  /* portfolio summary grid — 2 col */
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+
+  /* steps + features — 1 col */
+  .steps { grid-template-columns: 1fr; margin: 2rem 0 3rem; }
+  .features { grid-template-columns: 1fr; }
+  .feature-card.accent { grid-column: span 1; flex-direction: column; }
+  .carbon-score-display { align-items: flex-start; }
+
+  /* stats strip wraps */
+  .stats-strip { flex-wrap: wrap; gap: 1rem; padding: 1rem; }
+
+  /* period tabs scroll horizontally */
+  .period-tabs { overflow-x: auto; }
+
+  /* leaderboard table */
+  .leaderboard-table { font-size: 12px; }
+  .leaderboard-table th,
+  .leaderboard-table td { padding: 8px 6px; }
+
+  /* holdings table — hide less important cols */
+  .holdings-table th:nth-child(3),
+  .holdings-table td:nth-child(3),
+  .holdings-table th:nth-child(4),
+  .holdings-table td:nth-child(4) { display: none; }
+
+  /* filters wrap */
+  .filters { gap: 6px; }
+  .search-wrap { margin-left: 0; width: 100%; }
+  .search-input { width: 100% !important; }
+
+  /* carbon hero stacks */
+  .carbon-hero { flex-direction: column; align-items: flex-start; }
+
+  /* vocab section */
+  .vocab-tabs { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+
+  /* rec summary stacks */
+  .rec-summary { flex-direction: column; }
+
+  /* hero search */
+  .hero-actions { flex-direction: column; width: 100%; }
+  .hero-actions .btn-primary,
+  .hero-actions .btn-secondary { width: 100%; text-align: center; }
+}
+/* hide mobile-only elements on desktop */
+.nav-hamburger { display: none; }
+.mobile-menu { display: none; }
+@media (max-width: 480px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .industry-grid { grid-template-columns: 1fr; }
+  .esg-score { font-size: 22px; }
+}
+@media (max-width: 768px) {
+  .carbon-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .carbon-score-big {
+    font-size: 22px;
+  }
+  .carbon-hero > div:last-child {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+@media (max-width: 768px) {
+  .nav-links { display: none !important; }
+  .nav-hamburger { display: flex !important; }
+  .balance { display: none !important; }
+  .carbon-badge { display: none !important; }
+}

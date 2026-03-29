@@ -345,6 +345,25 @@
     <a class="btn-primary" href="{{ url_for('stocks') }}">Start with $10,000 →</a>
     <a class="btn-secondary" href="{{ url_for('portfolio') }}">View Portfolio</a>
   </div>
+
+  <!-- hero search -->
+  <div style="margin-top:1.5rem;width:100%;max-width:480px;animation:fadeUp 0.4s ease 0.25s both;">
+    <div style="position:relative;">
+      <input
+        id="heroSearch"
+        type="text"
+        placeholder="Search a stock... e.g. AAPL, Tesla"
+        style="width:100%;padding:12px 48px 12px 16px;border:0.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:var(--card-bg);color:var(--text);outline:none;transition:border 0.15s;box-shadow:0 2px 12px rgba(0,0,0,0.06);"
+        onfocus="this.style.borderColor='var(--green)'"
+        onblur="this.style.borderColor='var(--border)'"
+        oninput="heroSearchStocks(this.value)"
+      />
+      <div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px;pointer-events:none;">⌕</div>
+    </div>
+    <div id="heroResults" style="display:none;margin-top:6px;background:var(--card-bg);border:0.5px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);text-align:left;">
+      <div id="heroResultsList"></div>
+    </div>
+  </div>
 </div>
 
 <!-- stats strip -->
@@ -560,5 +579,50 @@
     document.querySelectorAll('.vocab-tab').forEach((t, i)  => t.classList.toggle('active', i === index));
     document.querySelectorAll('.vocab-dot').forEach((d, i)  => d.classList.toggle('active', i === index));
   }
+
+  let heroTimeout;
+  function heroSearchStocks(query) {
+    clearTimeout(heroTimeout);
+    const resultsEl = document.getElementById('heroResults');
+    const listEl    = document.getElementById('heroResultsList');
+
+    if (query.length < 2) { resultsEl.style.display = 'none'; return; }
+
+    listEl.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--muted);">Searching...</div>';
+    resultsEl.style.display = 'block';
+
+    heroTimeout = setTimeout(() => {
+      fetch(`/api/search/${query}`)
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(results => {
+          if (!results.length) {
+            listEl.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--muted);">No stocks found.</div>';
+            return;
+          }
+          listEl.innerHTML = results.map(r => `
+            <a href="/stock/${r.symbol}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid var(--border);text-decoration:none;transition:background 0.15s;"
+              onmouseover="this.style.background='var(--bg-subtle)'"
+              onmouseout="this.style.background='transparent'">
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--text);">${r.name}</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:1px;">${r.symbol}</div>
+              </div>
+              <div style="font-size:11px;color:var(--green-dark);background:var(--green-light);padding:3px 8px;border-radius:4px;flex-shrink:0;">View →</div>
+            </a>
+          `).join('');
+          listEl.lastElementChild.style.borderBottom = 'none';
+        })
+        .catch(() => {
+          listEl.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--red);">⚠️ Failed to fetch — try again later.</div>';
+        });
+    }, 300);
+  }
+
+  document.addEventListener('click', function(e) {
+    const search = document.getElementById('heroSearch');
+    if (search && !search.contains(e.target)) {
+      document.getElementById('heroResults').style.display = 'none';
+    }
+  });
 </script>
 {% endblock %}

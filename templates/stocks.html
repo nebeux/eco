@@ -27,7 +27,7 @@
     padding: 6px 14px;
     border-radius: 99px;
     border: 0.5px solid var(--border);
-    background: white;
+    background: var(--card-bg);
     color: var(--muted);
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
@@ -43,12 +43,13 @@
     font-size: 13px;
     font-family: 'DM Sans', sans-serif;
     color: var(--text);
-    background: white;
+    background: var(--card-bg);
     outline: none;
     transition: border 0.15s;
     width: 200px;
   }
   .search-input:focus { border-color: var(--green); }
+  .search-input::placeholder { color: var(--muted); }
   .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; }
 
   /* ── stock grid ── */
@@ -61,7 +62,7 @@
 
   /* ── stock card ── */
   .stock-card {
-    background: white;
+    background: var(--card-bg);
     border: 0.5px solid var(--border);
     border-radius: 12px;
     padding: 1.25rem;
@@ -77,21 +78,21 @@
   .stock-card-identity { display: flex; align-items: center; gap: 10px; }
   .stock-card-logo {
     width: 38px; height: 38px; border-radius: 8px;
-    background: #f0f0f0; border: 0.5px solid var(--border);
+    background: var(--bg-subtle); border: 0.5px solid var(--border);
     display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 500; color: var(--muted);
   }
   .stock-card-name { font-size: 14px; font-weight: 500; color: var(--text); }
   .stock-card-symbol { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .stock-card-price { text-align: right; }
-  .stock-card-price .price { font-size: 16px; font-weight: 500; font-family: var(--mono); }
+  .stock-card-price .price { font-size: 16px; font-weight: 500; font-family: var(--mono); color: var(--text); }
   .stock-card-price .change { font-size: 12px; margin-top: 2px; }
 
   /* ── esg mini bars ── */
   .esg-mini { margin-bottom: 12px; }
   .esg-mini-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
   .esg-mini-label { font-size: 10px; color: var(--muted); width: 18px; text-transform: uppercase; letter-spacing: 0.3px; }
-  .esg-mini-bg { flex: 1; height: 3px; background: #eee; border-radius: 2px; }
+  .esg-mini-bg { flex: 1; height: 3px; background: var(--border); border-radius: 2px; }
   .esg-mini-fill { height: 3px; border-radius: 2px; transition: width 0.6s ease; }
   .esg-mini-val { font-size: 10px; font-family: var(--mono); color: var(--muted); width: 24px; text-align: right; }
 
@@ -99,11 +100,63 @@
   .stock-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 0.5px solid var(--border); }
   .carbon-mini { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--green-dark); }
   .carbon-mini .dot { width: 5px; height: 5px; }
-  .sector-tag { font-size: 11px; color: var(--muted); background: #f5f5f5; padding: 3px 8px; border-radius: 4px; }
+  .sector-tag { font-size: 11px; color: var(--muted); background: var(--bg-subtle); padding: 3px 8px; border-radius: 4px; }
+
+  /* ── global search results ── */
+  #globalResultsList a {
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  #globalResultsList a:hover {
+    border-color: #9FE1CB;
+    transform: translateY(-1px);
+  }
+  #globalResultsList .result-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  #globalResultsList .result-symbol { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  #globalResultsList .result-badge {
+    font-size: 11px;
+    color: var(--green-dark);
+    background: var(--green-light);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── global search input (full width) ── */
+  #globalSearch {
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 14px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--card-bg);
+    outline: none;
+    transition: border 0.15s;
+  }
+  #globalSearch:focus { border-color: var(--green); }
+  #globalSearch::placeholder { color: var(--muted); }
 
   /* ── empty state ── */
   .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); grid-column: 1/-1; }
   .empty-state p { font-size: 14px; margin-top: 8px; }
+
+  /* ── footer ── */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 0.5px solid var(--border);
+    margin-top: 3rem;
+  }
 </style>
 {% endblock %}
 
@@ -114,10 +167,8 @@
   <div style="display:flex;gap:8px;">
     <input 
       id="globalSearch" 
-      class="search-input" 
       type="text" 
       placeholder="Search any NYSE stock by name or symbol..."
-      style="width:100%;padding:10px 16px;font-size:14px;"
       oninput="globalSearchStocks(this.value)"
     />
   </div>
@@ -277,46 +328,39 @@
     });
     document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
   }
+
   let searchTimeout;
-function globalSearchStocks(query) {
-  clearTimeout(searchTimeout);
-  const resultsEl = document.getElementById('globalResults');
-  const listEl = document.getElementById('globalResultsList');
+  function globalSearchStocks(query) {
+    clearTimeout(searchTimeout);
+    const resultsEl = document.getElementById('globalResults');
+    const listEl = document.getElementById('globalResultsList');
 
-  if (query.length < 2) {
-    resultsEl.style.display = 'none';
-    return;
+    if (query.length < 2) {
+      resultsEl.style.display = 'none';
+      return;
+    }
+
+    searchTimeout = setTimeout(() => {
+      fetch(`/api/search/${query}`)
+        .then(r => r.json())
+        .then(results => {
+          if (!results.length) {
+            resultsEl.style.display = 'none';
+            return;
+          }
+          listEl.innerHTML = results.map(r => `
+            <a href="/stock/${r.symbol}">
+              <div>
+                <div class="result-name">${r.name}</div>
+                <div class="result-symbol">${r.symbol}</div>
+              </div>
+              <div class="result-badge">View →</div>
+            </a>
+          `).join('');
+          resultsEl.style.display = 'block';
+        });
+    }, 300);
   }
-
-  searchTimeout = setTimeout(() => {
-    fetch(`/api/search/${query}`)
-      .then(r => r.json())
-      .then(results => {
-        if (!results.length) {
-          resultsEl.style.display = 'none';
-          return;
-        }
-        listEl.innerHTML = results.map(r => `
-          <a href="/stock/${r.symbol}" style="
-            display:flex;align-items:center;justify-content:space-between;
-            background:white;border:0.5px solid var(--border);border-radius:8px;
-            padding:10px 14px;text-decoration:none;
-            transition:border-color 0.15s,transform 0.15s;
-          "
-          onmouseover="this.style.borderColor='#9FE1CB';this.style.transform='translateY(-1px)'"
-          onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'"
-          >
-            <div>
-              <div style="font-size:13px;font-weight:500;color:var(--text);">${r.name}</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:1px;">${r.symbol}</div>
-            </div>
-            <div style="font-size:11px;color:var(--green-dark);background:var(--green-light);padding:3px 8px;border-radius:4px;">View →</div>
-          </a>
-        `).join('');
-        resultsEl.style.display = 'block';
-      });
-  }, 300); // debounce 300ms so it doesn't spam the API
-}
 </script>
 </div>
 <!-- footer -->

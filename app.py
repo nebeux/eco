@@ -1,16 +1,20 @@
 import os
+import requests
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from services.stockdata import get_metrics, get_quote, get_company_profile, get_recommendations
 from services.stockdata import search_stocks as do_search
 from services.esg_data import STOCKS, ESG_SCORES, get_esg
+from dotenv import load_dotenv
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'eco-stable-secret-key-2026')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+load_dotenv()
 
+app.secret_key = os.getenv('SECRET_KEY')
+API_KEY = os.getenv('FINNHUB_API_KEY')
 # ── database ──────────────────────────────────────────
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
@@ -379,5 +383,19 @@ def portfolio_history():
         'value': s.value
     } for s in snapshots])
 
+@app.route('/api/news/<symbol>')
+def stock_news(symbol):
+    import datetime
+    to = datetime.date.today().isoformat()
+    from_date = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
+    url = f"https://finnhub.io/api/v1/company-news?symbol={symbol}&from={from_date}&to={to}&token={API_KEY}"
+    data = requests.get(url).json()
+    return jsonify(data[:6])
+
+@app.route('/api/filings/<symbol>')
+def sec_filings(symbol):
+    url = f"https://finnhub.io/api/v1/stock/filings?symbol={symbol}&token={API_KEY}"
+    data = requests.get(url).json()
+    return jsonify(data[:6])
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

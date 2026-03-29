@@ -144,6 +144,26 @@
   #globalSearch:focus { border-color: var(--green); }
   #globalSearch::placeholder { color: var(--muted); }
 
+  /* ── sort select ── */
+  .sort-select {
+    padding: 6px 28px 6px 12px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--card-bg);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border 0.15s;
+  }
+  .sort-select:focus { border-color: var(--green); }
+
   /* ── empty state ── */
   .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); grid-column: 1/-1; }
   .empty-state p { font-size: 14px; margin-top: 8px; }
@@ -195,6 +215,16 @@
   <button class="filter-btn" onclick="filterStocks('Automotive', this)">Automotive</button>
   <button class="filter-btn" onclick="filterStocks('high-esg', this)">High ESG</button>
   <button class="filter-btn" onclick="filterStocks('low-esg', this)">Low ESG</button>
+  <select class="sort-select" onchange="sortStocks(this.value)">
+    <option value="default">Sort: Default</option>
+    <option value="price-asc">Price: Low → High</option>
+    <option value="price-desc">Price: High → Low</option>
+    <option value="esg-desc">ESG: Best first</option>
+    <option value="esg-asc">ESG: Worst first</option>
+    <option value="change-desc">Gain: Best today</option>
+    <option value="change-asc">Gain: Worst today</option>
+    <option value="name-asc">Name: A → Z</option>
+  </select>
   <div class="search-wrap">
     <span class="search-icon">⌕</span>
     <input class="search-input" type="text" placeholder="Search stocks..." id="searchInput" oninput="searchStocks(this.value)"/>
@@ -290,6 +320,9 @@
           const up = data.change >= 0;
           changeEl.textContent = (up ? '▲' : '▼') + ' ' + Math.abs(data.change_pct).toFixed(2) + '%';
           changeEl.style.color = up ? '#1D9E75' : '#E24B4A';
+          // store for sorting
+          card.dataset.price = data.current;
+          card.dataset.change = data.change_pct;
         }
       })
       .catch(() => {
@@ -329,7 +362,26 @@
     document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
   }
 
-  let searchTimeout;
+  // sort
+  function sortStocks(method) {
+    const grid = document.getElementById('stocksGrid');
+    const cards = [...grid.querySelectorAll('.stock-card')];
+    cards.sort((a, b) => {
+      switch (method) {
+        case 'price-asc':  return (parseFloat(a.dataset.price) || 0) - (parseFloat(b.dataset.price) || 0);
+        case 'price-desc': return (parseFloat(b.dataset.price) || 0) - (parseFloat(a.dataset.price) || 0);
+        case 'esg-desc':   return parseFloat(b.dataset.esg) - parseFloat(a.dataset.esg);
+        case 'esg-asc':    return parseFloat(a.dataset.esg) - parseFloat(b.dataset.esg);
+        case 'change-desc':return (parseFloat(b.dataset.change) || -Infinity) - (parseFloat(a.dataset.change) || -Infinity);
+        case 'change-asc': return (parseFloat(a.dataset.change) || Infinity) - (parseFloat(b.dataset.change) || Infinity);
+        case 'name-asc':   return a.dataset.name.localeCompare(b.dataset.name);
+        default:           return 0;
+      }
+    });
+    const empty = document.getElementById('emptyState');
+    cards.forEach(c => grid.insertBefore(c, empty));
+  }
+
   function globalSearchStocks(query) {
     clearTimeout(searchTimeout);
     const resultsEl = document.getElementById('globalResults');

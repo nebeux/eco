@@ -7,7 +7,9 @@ from services.stockdata import search_stocks as do_search
 from services.esg_data import STOCKS, ESG_SCORES, get_esg
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_eco_key'
+app.secret_key = os.environ.get('SECRET_KEY', 'eco-stable-secret-key-2026')
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # ── database ──────────────────────────────────────────
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -31,20 +33,20 @@ class Holding(db.Model):
     avg_price = db.Column(db.Float, nullable=False)
 
 class Transaction(db.Model):
-    id             = db.Column(db.Integer, primary_key=True)
-    user_id        = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    symbol         = db.Column(db.String(10), nullable=False)
-    shares         = db.Column(db.Float, nullable=False)
-    price          = db.Column(db.Float, nullable=False)
-    type           = db.Column(db.String(4), nullable=False)  # 'buy' or 'sell'
-    carbon_impact  = db.Column(db.Float, default=0.0)         # impact of this transaction (0-1000 scale)
-    timestamp      = db.Column(db.DateTime, default=db.func.now())
+    id            = db.Column(db.Integer, primary_key=True)
+    user_id       = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    symbol        = db.Column(db.String(10), nullable=False)
+    shares        = db.Column(db.Float, nullable=False)
+    price         = db.Column(db.Float, nullable=False)
+    type          = db.Column(db.String(4), nullable=False)  # 'buy' or 'sell'
+    carbon_impact = db.Column(db.Float, default=0.0)         # impact of this transaction (0-1000 scale)
+    timestamp     = db.Column(db.DateTime, default=db.func.now())
 
 class PortfolioSnapshot(db.Model):
-    id         = db.Column(db.Integer, primary_key=True)
-    user_id    = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    value      = db.Column(db.Float, nullable=False)
-    timestamp  = db.Column(db.DateTime, default=db.func.now())
+    id        = db.Column(db.Integer, primary_key=True)
+    user_id   = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    value     = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.now())
 
 with app.app_context():
     db.create_all()
@@ -66,9 +68,14 @@ with app.app_context():
 
 # ── helpers ───────────────────────────────────────────
 def get_current_user():
-    if 'user' not in session:
+    username = session.get('user')
+    if not username:
         return None
-    return User.query.filter_by(username=session['user']).first()
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        session.clear()
+        return None
+    return user
 
 def login_required(f):
     from functools import wraps
@@ -126,7 +133,9 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
+            session.clear()
             session['user'] = user.username
+            session.permanent = True
             return redirect(url_for('index'))
         flash('Invalid username or password.', 'error')
         return redirect(url_for('login'))
@@ -134,7 +143,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
+    session.clear()
     return redirect(url_for('index'))
 
 # ── pages ─────────────────────────────────────────────
@@ -203,12 +212,12 @@ def api_portfolio():
     total_value    = 0
     for h in holdings:
         try:
-            q        = get_quote(h.symbol)
-            cur      = q['current']
+            q   = get_quote(h.symbol)
+            cur = q['current']
         except:
-            cur      = h.avg_price
-        value        = h.shares * cur
-        cost         = h.shares * h.avg_price
+            cur = h.avg_price
+        value          = h.shares * cur
+        cost           = h.shares * h.avg_price
         total_value    += value
         total_invested += cost
         result.append({
@@ -221,11 +230,11 @@ def api_portfolio():
             'gain_pct':  round(((value - cost) / cost) * 100, 2) if cost else 0
         })
     return jsonify({
-        'balance':         round(user.balance, 2),
-        'holdings':        result,
-        'total_value':     round(total_value + user.balance, 2),
-        'total_gain':      round((total_value + user.balance) - 10000, 2),
-        'total_gain_pct':  round(((total_value + user.balance - 10000) / 10000) * 100, 2)
+        'balance':        round(user.balance, 2),
+        'holdings':       result,
+        'total_value':    round(total_value + user.balance, 2),
+        'total_gain':     round((total_value + user.balance) - 10000, 2),
+        'total_gain_pct': round(((total_value + user.balance - 10000) / 10000) * 100, 2)
     })
 
 # ── api: buy ──────────────────────────────────────────
@@ -324,7 +333,6 @@ def inject_user():
         'nav_balance': f"{user.balance:.2f}" if user else '10,000.00',
         'nav_carbon_impact': round(user.total_carbon_impact or 0, 1) if user else 0
     }
-# ── portfolio ─────────────────────────────────────────
 
 def save_snapshot(user):
     holdings = Holding.query.filter_by(user_id=user.id).all()
@@ -346,5 +354,6 @@ def portfolio_history():
         'time': s.timestamp.strftime('%b %d %H:%M'),
         'value': s.value
     } for s in snapshots])
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

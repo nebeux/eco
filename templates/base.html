@@ -237,6 +237,87 @@
   </div>
 </nav>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+    <div class="eco-modal-backdrop" id="ecoModal">
+      <div class="eco-modal eco-modal--{{ category }}">
+        <div class="eco-modal-icon">{% if category == 'api_limit' %}⏱️{% elif category == 'error' %}⚠️{% else %}✓{% endif %}</div>
+        <div class="eco-modal-title">{% if category == 'api_limit' %}Hold tight{% elif category == 'error' %}Something went wrong{% else %}Done!{% endif %}</div>
+        <div class="eco-modal-msg">{{ message }}</div>
+        <button class="eco-modal-btn" onclick="document.getElementById('ecoModal').remove()">Got it</button>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<style>
+  .eco-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: backdropIn 0.2s ease both;
+  }
+  @keyframes backdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .eco-modal {
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem 2rem 2rem;
+    max-width: 400px;
+    width: calc(100% - 3rem);
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.92) translateY(12px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .eco-modal-icon {
+    font-size: 40px;
+    margin-bottom: 1rem;
+    line-height: 1;
+  }
+  .eco-modal-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    margin-bottom: 0.6rem;
+  }
+  .eco-modal-msg {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 1.75rem;
+  }
+  .eco-modal-btn {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 11px 32px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .eco-modal-btn:hover  { background: var(--green-dark); }
+  .eco-modal-btn:active { transform: scale(0.97); }
+</style>
+
 {% block content %}{% endblock %}
 
 <script>

@@ -158,11 +158,15 @@ def stocks():
 @app.route('/stock/<symbol>')
 def stock(symbol):
     symbol = symbol.upper()
-    profile = get_company_profile(symbol)
-    quote   = get_quote(symbol)
-    metrics = get_metrics(symbol)
-    rec     = get_recommendations(symbol)
-    esg     = get_esg(symbol, profile.get("finnhubIndustry", "Technology"))
+    try:
+        profile = get_company_profile(symbol)
+        quote   = get_quote(symbol)
+        metrics = get_metrics(symbol)
+        rec     = get_recommendations(symbol)
+        esg     = get_esg(symbol, profile.get("finnhubIndustry", "Technology"))
+    except Exception:
+        flash("Sorry, we hit our API call limit — try again in about 2 minutes and you should be fine :)", "api_limit")
+        return redirect(url_for('index'))
 
     # pass user's current holding for this stock if logged in
     user = get_current_user()

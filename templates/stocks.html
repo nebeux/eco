@@ -381,7 +381,7 @@
     const empty = document.getElementById('emptyState');
     cards.forEach(c => grid.insertBefore(c, empty));
   }
-
+let searchTimeout;
   function globalSearchStocks(query) {
     clearTimeout(searchTimeout);
     const resultsEl = document.getElementById('globalResults');

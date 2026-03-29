@@ -107,5 +107,12 @@ def get_company_info(symbol):
 
 def search_stocks(query):
     data = requests.get(f"{BASE}/search?q={query}&token={API_KEY}").json()
-    return [{'symbol': r['symbol'], 'name': r['description']} for r in data.get('result', [])[:10]]
-
+    results = data.get('result', [])
+    filtered = [
+        {'symbol': r['symbol'], 'name': r['description']}
+        for r in results
+        if r.get('type') == 'Common Stock' 
+        and '.' not in r['symbol']
+        and len(r['symbol']) <= 5
+    ]
+    return filtered[:10]

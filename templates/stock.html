@@ -399,7 +399,7 @@
       el.innerHTML = data.map(f => `<a href="${f.reportUrl}" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);text-decoration:none;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1"><div><div style="font-size:12px;font-weight:500;color:var(--text);">${f.form}</div><div style="font-size:11px;color:var(--muted);">${f.filedDate}</div></div><div style="font-size:11px;color:var(--green-dark);background:var(--green-light);padding:3px 8px;border-radius:4px;">View →</div></a>`).join('');
       el.lastElementChild.style.borderBottom = 'none';
     });
-
+  requestAnimationFrame(() => priceChart.resize());
   switchPeriod(document.querySelector('.period-tab.active'), '1D');
 </script>
 {% endblock %}

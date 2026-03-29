@@ -7,7 +7,7 @@
   .portfolio-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
   /* ── summary cards ── */
-  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; animation: fadeUp 0.3s ease 0.05s both; }
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 2rem; animation: fadeUp 0.3s ease 0.05s both; }
   .summary-card { background: var(--card-bg); border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; }
   .summary-card .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
   .summary-card .val { font-size: 24px; font-weight: 500; font-family: var(--mono); letter-spacing: -0.5px; color: var(--text); }
@@ -84,6 +84,13 @@
       <div class="val">{{ holdings|length }}</div>
       <div class="sub">Active positions</div>
     </div>
+    <div class="summary-card" style="border-color: {% if user.total_carbon_impact > 50 %}var(--red){% elif user.total_carbon_impact > 20 %}#f59e0b{% else %}var(--green){% endif %};">
+      <div class="lbl">☁️ Carbon Impact</div>
+      <div class="val" style="color: {% if user.total_carbon_impact > 50 %}var(--red){% elif user.total_carbon_impact > 20 %}#f59e0b{% else %}var(--green){% endif %};">
+        {{ "%.2f"|format(user.total_carbon_impact or 0) }}
+      </div>
+      <div class="sub">{% if user.total_carbon_impact > 50 %}High impact — consider greener stocks{% elif user.total_carbon_impact > 20 %}Moderate impact{% else %}Low impact — great job!{% endif %}</div>
+    </div>
   </div>
 
   <!-- chart -->
@@ -111,6 +118,7 @@
           <th style="text-align:right">Current</th>
           <th style="text-align:right">Value</th>
           <th style="text-align:right">Gain / Loss</th>
+          <th style="text-align:right">☁️ Impact</th>
           <th></th>
         </tr>
       </thead>
@@ -123,6 +131,7 @@
           <td class="num-cell" id="cur-{{ h.symbol }}">—</td>
           <td class="num-cell" id="val-{{ h.symbol }}">—</td>
           <td class="gain-cell" id="gain-{{ h.symbol }}">—</td>
+          <td class="num-cell" id="carbon-{{ h.symbol }}" style="font-size:12px;">—</td>
           <td style="text-align:right">
             <button class="sell-btn" onclick="openSellModal('{{ h.symbol }}', {{ h.shares }})">Sell</button>
           </td>
@@ -154,6 +163,11 @@
           <div class="tx-amount {{ 'down' if tx.type == 'buy' else 'up' }}">
             {{ '-' if tx.type == 'buy' else '+' }}${{ "%.2f"|format(tx.shares * tx.price) }}
           </div>
+          {% if tx.type == 'buy' and tx.carbon_impact %}
+          <div class="tx-time" style="color: {% if tx.carbon_impact > 50 %}var(--red){% elif tx.carbon_impact > 20 %}#f59e0b{% else %}var(--green){% endif %};">
+            ☁️ +{{ "%.1f"|format(tx.carbon_impact) }} impact
+          </div>
+          {% endif %}
           <div class="tx-time">{{ tx.timestamp.strftime('%b %d, %Y %H:%M') }}</div>
         </div>
       </div>
@@ -280,6 +294,20 @@
         gainEl.textContent = (up ? '+' : '') + '$' + gain.toFixed(2) + ' (' + (up ? '+' : '') + gainPct + '%)';
         gainEl.style.color = up ? 'var(--green)' : 'var(--red)';
       });
+
+    // fetch ESG to show per-holding carbon impact estimate
+    fetch(`/api/esg/${symbol}`)
+      .then(r => r.json())
+      .then(esg => {
+        const carbonEl = document.getElementById(`carbon-${symbol}`);
+        if (!carbonEl) return;
+        const score = esg.carbon;
+        const holdingValue = shares[symbol] * (currentPrices[symbol] || avgPrices[symbol]);
+        const impact = ((holdingValue / 10000) * (1 - score / 100) * 1000).toFixed(1);
+        const color = score > 70 ? 'var(--green)' : score > 40 ? '#f59e0b' : 'var(--red)';
+        carbonEl.textContent = impact;
+        carbonEl.style.color = color;
+      }).catch(() => {});
   });
 
   updateSummary();

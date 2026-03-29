@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from services.stockdata import get_metrics, get_quote, get_company_profile, get_recommendations
 from services.stockdata import search_stocks as do_search
-from services.esg_data import STOCKS, ESG_SCORES
+from services.esg_data import STOCKS, ESG_SCORES, get_esg
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_eco_key'
@@ -17,10 +17,11 @@ db = SQLAlchemy(app)
 
 # ── models ────────────────────────────────────────────
 class User(db.Model):
-    id           = db.Column(db.Integer, primary_key=True)
-    username     = db.Column(db.String(80), unique=True, nullable=False)
-    password     = db.Column(db.String(120), nullable=False)
-    balance      = db.Column(db.Float, default=10000.0)
+    id                  = db.Column(db.Integer, primary_key=True)
+    username            = db.Column(db.String(80), unique=True, nullable=False)
+    password            = db.Column(db.String(120), nullable=False)
+    balance             = db.Column(db.Float, default=10000.0)
+    total_carbon_impact = db.Column(db.Float, default=0.0)
 
 class Holding(db.Model):
     id        = db.Column(db.Integer, primary_key=True)
@@ -30,13 +31,14 @@ class Holding(db.Model):
     avg_price = db.Column(db.Float, nullable=False)
 
 class Transaction(db.Model):
-    id        = db.Column(db.Integer, primary_key=True)
-    user_id   = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    symbol    = db.Column(db.String(10), nullable=False)
-    shares    = db.Column(db.Float, nullable=False)
-    price     = db.Column(db.Float, nullable=False)
-    type      = db.Column(db.String(4), nullable=False)  # 'buy' or 'sell'
-    timestamp = db.Column(db.DateTime, default=db.func.now())
+    id             = db.Column(db.Integer, primary_key=True)
+    user_id        = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    symbol         = db.Column(db.String(10), nullable=False)
+    shares         = db.Column(db.Float, nullable=False)
+    price          = db.Column(db.Float, nullable=False)
+    type           = db.Column(db.String(4), nullable=False)  # 'buy' or 'sell'
+    carbon_impact  = db.Column(db.Float, default=0.0)         # impact of this transaction (0-1000 scale)
+    timestamp      = db.Column(db.DateTime, default=db.func.now())
 
 class PortfolioSnapshot(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
@@ -46,6 +48,21 @@ class PortfolioSnapshot(db.Model):
 
 with app.app_context():
     db.create_all()
+    # migrate existing DBs — add new columns if they don't exist yet
+    from sqlalchemy import text
+    with db.engine.connect() as conn:
+        for col, default in [('total_carbon_impact', '0.0')]:
+            try:
+                conn.execute(text(f'ALTER TABLE user ADD COLUMN {col} FLOAT DEFAULT {default}'))
+                conn.commit()
+            except Exception:
+                pass
+        for col, default in [('carbon_impact', '0.0')]:
+            try:
+                conn.execute(text(f'ALTER TABLE transaction ADD COLUMN {col} FLOAT DEFAULT {default}'))
+                conn.commit()
+            except Exception:
+                pass
 
 # ── helpers ───────────────────────────────────────────
 def get_current_user():
@@ -61,6 +78,28 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
+
+def calc_carbon_impact(symbol, sector, shares, price):
+    """Carbon impact of a single transaction — cumulative, no scale cap.
+    impact = shares * (1 - carbon_score/100)
+    Buying 10 shares of XOM (carbon=10) → 9.0 impact.
+    Buying 10 shares of ENPH (carbon=98) → 0.2 impact.
+    """
+    esg = get_esg(symbol, sector)
+    carbon_score = esg.get('carbon', 50)
+    return round(shares * (1 - carbon_score / 100), 4)
+
+def recalc_total_carbon(user):
+    """Recalculate total carbon impact from current holdings (dynamic)."""
+    holdings = Holding.query.filter_by(user_id=user.id).all()
+    total = 0.0
+    for h in holdings:
+        stock_info = next((s for s in STOCKS if s['symbol'] == h.symbol), None)
+        sector = stock_info['sector'] if stock_info else 'Technology'
+        esg = get_esg(h.symbol, sector)
+        carbon_score = esg.get('carbon', 50)
+        total += h.shares * (1 - carbon_score / 100)
+    user.total_carbon_impact = round(total, 4)
 
 # ── auth ──────────────────────────────────────────────
 @app.route('/register', methods=['GET', 'POST'])
@@ -114,7 +153,7 @@ def stock(symbol):
     quote   = get_quote(symbol)
     metrics = get_metrics(symbol)
     rec     = get_recommendations(symbol)
-    esg     = ESG_SCORES.get(symbol, {"environmental": 50, "social": 50, "governance": 50, "carbon": 50})
+    esg     = get_esg(symbol, profile.get("finnhubIndustry", "Technology"))
 
     # pass user's current holding for this stock if logged in
     user = get_current_user()
@@ -197,6 +236,7 @@ def buy():
     symbol = data['symbol'].upper()
     shares = float(data['shares'])
     price  = float(data['price'])
+    sector = data.get('sector', 'Technology')
     total  = shares * price
 
     user = get_current_user()
@@ -205,19 +245,25 @@ def buy():
 
     user.balance -= total
 
+    # carbon impact for this transaction
+    impact = calc_carbon_impact(symbol, sector, shares, price)
+
     existing = Holding.query.filter_by(user_id=user.id, symbol=symbol).first()
     if existing:
-        new_shares    = existing.shares + shares
-        new_avg       = ((existing.shares * existing.avg_price) + total) / new_shares
+        new_shares         = existing.shares + shares
+        new_avg            = ((existing.shares * existing.avg_price) + total) / new_shares
         existing.shares    = new_shares
         existing.avg_price = new_avg
     else:
         db.session.add(Holding(user_id=user.id, symbol=symbol, shares=shares, avg_price=price))
 
-    db.session.add(Transaction(user_id=user.id, symbol=symbol, shares=shares, price=price, type='buy'))
+    db.session.flush()  # so recalc sees updated holdings
+    recalc_total_carbon(user)
+
+    db.session.add(Transaction(user_id=user.id, symbol=symbol, shares=shares, price=price, type='buy', carbon_impact=impact))
     db.session.commit()
     save_snapshot(user)
-    return jsonify({'success': True, 'new_balance': round(user.balance, 2)})
+    return jsonify({'success': True, 'new_balance': round(user.balance, 2), 'carbon_impact': impact, 'total_carbon_impact': user.total_carbon_impact})
 
 # ── api: sell ─────────────────────────────────────────
 @app.route('/api/sell', methods=['POST'])
@@ -240,12 +286,22 @@ def sell():
     if existing.shares == 0:
         db.session.delete(existing)
 
+    db.session.flush()  # so recalc sees updated holdings
+    recalc_total_carbon(user)
+
     db.session.add(Transaction(user_id=user.id, symbol=symbol, shares=shares, price=price, type='sell'))
     db.session.commit()
     save_snapshot(user)
-    return jsonify({'success': True, 'new_balance': round(user.balance, 2)})
+    return jsonify({'success': True, 'new_balance': round(user.balance, 2), 'total_carbon_impact': user.total_carbon_impact})
 
 # ── api: misc ─────────────────────────────────────────
+@app.route('/api/esg/<symbol>')
+def api_esg(symbol):
+    symbol = symbol.upper()
+    stock_info = next((s for s in STOCKS if s['symbol'] == symbol), None)
+    sector = stock_info['sector'] if stock_info else 'Technology'
+    return jsonify(get_esg(symbol, sector))
+
 @app.route('/api/quote/<symbol>')
 def quote(symbol):
     return jsonify(get_quote(symbol))
@@ -265,7 +321,8 @@ def inject_user():
     user = get_current_user()
     return {
         'current_user': user,
-        'nav_balance': f"{user.balance:.2f}" if user else '10,000.00'
+        'nav_balance': f"{user.balance:.2f}" if user else '10,000.00',
+        'nav_carbon_impact': round(user.total_carbon_impact or 0, 1) if user else 0
     }
 # ── portfolio ─────────────────────────────────────────
 

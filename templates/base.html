@@ -206,6 +206,11 @@
   <div class="nav-right">
     {% if session.get('user') %}
       <div class="balance">Balance <strong id="balance">${{ nav_balance }}</strong></div>
+      {% if nav_carbon_impact > 0 %}
+      <div class="carbon-badge" style="background: {% if nav_carbon_impact > 50 %}var(--red-light, #fde8e8){% elif nav_carbon_impact > 20 %}#fef3c7{% else %}var(--green-light){% endif %}; color: {% if nav_carbon_impact > 50 %}var(--red){% elif nav_carbon_impact > 20 %}#b45309{% else %}var(--green-dark){% endif %};">
+        <span>☁️</span> {{ nav_carbon_impact }}
+      </div>
+      {% endif %}
       <a href="{{ url_for('logout') }}" style="font-size: 13px; color: var(--red); text-decoration: none;">Logout</a>
     {% else %}
       <a href="{{ url_for('login') }}" class="btn-primary" style="padding: 6px 16px; font-size: 13px;">Login</a>

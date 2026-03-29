@@ -67,7 +67,7 @@
   .btn-primary:hover { background: var(--green-dark); }
   .btn-primary:active { transform: scale(0.98); }
   .btn-secondary {
-    background: white;
+    background: var(--card-bg);
     color: var(--text);
     border: 0.5px solid var(--border);
     padding: 12px 28px;
@@ -80,7 +80,7 @@
     transition: background 0.2s, border-color 0.2s, transform 0.1s;
     display: inline-block;
   }
-  .btn-secondary:hover { background: #f5f5f5; border-color: #ccc; }
+  .btn-secondary:hover { background: var(--bg-subtle); border-color: var(--muted); }
   .btn-secondary:active { transform: scale(0.98); }
 
   /* ── stats strip ── */
@@ -89,7 +89,7 @@
     justify-content: center;
     gap: 2rem;
     padding: 1.5rem 2rem;
-    background: white;
+    background: var(--card-bg);
     border-top: 0.5px solid var(--border);
     border-bottom: 0.5px solid var(--border);
     margin-bottom: 4rem;
@@ -99,7 +99,7 @@
   .stat-item .num { font-size: 22px; font-weight: 500; font-family: var(--mono); color: var(--text); }
   .stat-item .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-  /* ── how it works ── */
+  /* ── section labels ── */
   .section-title {
     font-size: 11px;
     font-weight: 500;
@@ -115,13 +115,8 @@
     color: var(--text);
     margin-bottom: 1rem;
   }
-  .section-sub {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.7;
-    max-width: 480px;
-  }
 
+  /* ── steps ── */
   .steps {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -130,7 +125,7 @@
     animation: fadeUp 0.4s ease 0.1s both;
   }
   .step-card {
-    background: white;
+    background: var(--card-bg);
     border: 0.5px solid var(--border);
     border-radius: 12px;
     padding: 1.5rem;
@@ -148,7 +143,7 @@
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 1rem;
   }
-  .step-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .step-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
   .step-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
 
   /* ── features ── */
@@ -160,7 +155,7 @@
     animation: fadeUp 0.4s ease 0.1s both;
   }
   .feature-card {
-    background: white;
+    background: var(--card-bg);
     border: 0.5px solid var(--border);
     border-radius: 12px;
     padding: 1.5rem;
@@ -182,10 +177,9 @@
     background: var(--green-light);
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 1rem;
-    font-size: 18px;
   }
-  .feature-card.accent .feature-icon { background: white; }
-  .feature-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .feature-card.accent .feature-icon { background: var(--card-bg); }
+  .feature-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
   .feature-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
   .feature-card.accent h3 { color: var(--green-dark); font-size: 18px; }
   .feature-card.accent p { color: var(--green-dark); opacity: 0.8; max-width: 400px; }
@@ -208,7 +202,7 @@
     margin-bottom: 4rem;
     animation: fadeUp 0.4s ease 0.1s both;
   }
-  .cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 500; color: white; letter-spacing: -0.5px; margin-bottom: 0.75rem; }
+  .cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 500; color: var(--bg); letter-spacing: -0.5px; margin-bottom: 0.75rem; }
   .cta-section p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 2rem; line-height: 1.7; }
   .cta-section .btn-primary { background: var(--green); font-size: 15px; padding: 14px 36px; }
   .cta-section .btn-primary:hover { background: #25c48f; }
@@ -228,9 +222,12 @@
 
 <!-- hero -->
 <div class="hero">
-  <div class="hero-tag"><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>ESG · Financial Literacy · Impact</div>
+  <div class="hero-tag">
+    <div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>
+    ESG · Financial Literacy · Impact
+  </div>
   <h1>Invest economically.<br>Live <span>ecologically</span>.</h1>
-  <p>Eco is a simulated stock portfolio where your returns and your carbon footprint both matter. No one should have to compromise their ethics for money. Learn to invest — and understand the impact of every dollar.</p>
+  <p>Eco is a simulated stock portfolio where your returns and your carbon footprint both matter. You shouldn't have to choose between making money and doing right by the planet. Start investing and see exactly what your dollars are funding.</p>
   <div class="hero-actions">
     <a class="btn-primary">Start with $10,000 →</a>
     <a class="btn-secondary">View Portfolio</a>
@@ -244,71 +241,75 @@
   <div class="stat-item"><div class="num">3</div><div class="lbl">ESG dimensions scored</div></div>
   <div class="stat-item"><div class="num" style="color:var(--green);">Real</div><div class="lbl">Live NYSE prices</div></div>
 </div>
+
 <div class="full-stock-page">
-<!-- how it works -->
-<div style="text-align:center;margin-bottom:0.5rem;">
-  <div class="section-title">How it works</div>
-  <div class="section-heading">Three steps to invest with purpose</div>
-</div>
 
-<div class="steps">
-  <div class="step-card">
-    <div class="step-num">01</div>
-    <h3>Pick your stocks</h3>
-    <p>Browse real NYSE companies with live prices. Each stock comes with full financial metrics and an ESG breakdown explaining exactly how ethical it is.</p>
+  <!-- how it works -->
+  <div style="text-align:center;margin-bottom:0.5rem;">
+    <div class="section-title">How it works</div>
+    <div class="section-heading">Three steps to invest with purpose</div>
   </div>
-  <div class="step-card">
-    <div class="step-num">02</div>
-    <h3>Build your portfolio</h3>
-    <p>Buy and sell with your simulated $10,000. Watch your balance grow — but keep an eye on your carbon impact score too.</p>
-  </div>
-  <div class="step-card">
-    <div class="step-num">03</div>
-    <h3>Beat the leaderboard</h3>
-    <p>Compete to get the highest returns with the lowest carbon impact. The best investors balance both — can you?</p>
-  </div>
-</div>
 
-<!-- features -->
-<div style="text-align:center;margin-bottom:0.5rem;">
-  <div class="section-title">What makes Eco different</div>
-  <div class="section-heading">More than a stock simulator</div>
-</div>
-
-<div class="features">
-  <div class="feature-card accent">
-    <div>
-      <div class="feature-icon">🌱</div>
-      <h3>Carbon impact score</h3>
-      <p>Every stock you hold contributes to your portfolio's carbon footprint. High returns aren't enough — you need to think about what you're funding.</p>
+  <div class="steps">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <h3>Pick your stocks</h3>
+      <p>Browse real NYSE companies at live prices. Every stock has a full ESG breakdown so you know exactly what you're getting into before you buy.</p>
     </div>
-    <div class="carbon-score-display">
-      <div class="big">82</div>
-      <div class="lbl">Low impact portfolio</div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <h3>Build your portfolio</h3>
+      <p>Trade with your $10,000 and watch how your balance moves. Just don't forget to keep an eye on your carbon score too.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <h3>Beat the leaderboard</h3>
+      <p>High returns and a clean portfolio. Most people pick one. The best investors here manage both.</p>
     </div>
   </div>
-  <div class="feature-card">
-    <div class="feature-icon">📊</div>
-    <h3>Real financial data</h3>
-    <p>Live prices, analyst recommendations, earnings surprises, key ratios — everything a real investor would look at, explained clearly.</p>
+
+  <!-- features -->
+  <div style="text-align:center;margin-bottom:0.5rem;">
+    <div class="section-title">What makes Eco different</div>
+    <div class="section-heading">More than a stock simulator</div>
   </div>
-  <div class="feature-card">
-    <div class="feature-icon">🎓</div>
-    <h3>Built to teach</h3>
-    <p>Every metric comes with context. P/B ratio, gross margin, beta — Eco explains what it means and why it matters before you invest.</p>
+
+  <div class="features">
+    <div class="feature-card accent">
+      <div>
+        <div class="feature-icon" style="font-size:16px;color:var(--green-dark);font-weight:600;">CO₂</div>
+        <h3>Carbon impact score</h3>
+        <p>Every stock you buy adds to your portfolio's carbon score. Returns matter, but so does what you're actually putting money into.</p>
+      </div>
+      <div class="carbon-score-display">
+        <div class="big">82</div>
+        <div class="lbl">Low impact portfolio</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="font-size:14px;font-weight:700;color:var(--green-dark);">$</div>
+      <h3>Real financial data</h3>
+      <p>Live prices, analyst ratings, P/E ratios, the works. And actually explained, not just thrown at you.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="font-size:14px;font-weight:700;color:var(--green-dark);">?</div>
+      <h3>Built to teach</h3>
+      <p>Every number on the page has an explanation. You don't need to know anything going in.</p>
+    </div>
   </div>
+
 </div>
-</div>
+
 <!-- cta -->
 <div class="cta-section">
-  <h2>Ready to invest with purpose?</h2>
-  <p>You have $10,000 and 30+ stocks to choose from.<br>Make money. Make an impact. See if you can do both.</p>
+  <h2>Give it a shot.</h2>
+  <p>You've got $10,000 and 30+ stocks. See if you can grow your money without trashing your carbon score in the process.</p>
   <a class="btn-primary">Browse Stocks →</a>
 </div>
 
 <!-- footer -->
 <div class="footer">
-  Made with love for Hackonomics 2026 · All trades are simulated · Data sourced from Finnhub
+  Made for Hackonomics 2026 · All trades are simulated · Data from Finnhub
 </div>
 
 {% endblock %}

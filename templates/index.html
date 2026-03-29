@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  /* ── hero ── */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 5rem 1rem 4rem;
+    position: relative;
+  }
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--green-dark);
+    background: var(--green-light);
+    padding: 5px 14px;
+    border-radius: 99px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.4s ease both;
+  }
+  .hero-tag .dot { width: 5px; height: 5px; }
+  .hero h1 {
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    font-weight: 500;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    max-width: 700px;
+    color: var(--text);
+    animation: fadeUp 0.4s ease 0.07s both;
+  }
+  .hero h1 span { color: var(--green); }
+  .hero p {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.7;
+    margin-top: 1.25rem;
+    animation: fadeUp 0.4s ease 0.14s both;
+  }
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 2rem;
+    animation: fadeUp 0.4s ease 0.2s both;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary {
+    background: white;
+    color: var(--text);
+    border: 0.5px solid var(--border);
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    display: inline-block;
+  }
+  .btn-secondary:hover { background: #f5f5f5; border-color: #ccc; }
+  .btn-secondary:active { transform: scale(0.98); }
+
+  /* ── stats strip ── */
+  .stats-strip {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1.5rem 2rem;
+    background: white;
+    border-top: 0.5px solid var(--border);
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 4rem;
+    animation: fadeIn 0.5s ease 0.3s both;
+  }
+  .stat-item { text-align: center; }
+  .stat-item .num { font-size: 22px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+  .stat-item .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── how it works ── */
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+  .section-heading {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .section-sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 480px;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin: 3rem 0 5rem;
+    animation: fadeUp 0.4s ease 0.1s both;
+  }
+  .step-card {
+    background: white;
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .step-card:hover { border-color: #9FE1CB; box-shadow: 0 4px 16px rgba(29,158,117,0.08); transform: translateY(-2px); }
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--mono);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+  }
+  .step-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .step-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── features ── */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 3rem 0 5rem;
+    animation: fadeUp 0.4s ease 0.1s both;
+  }
+  .feature-card {
+    background: white;
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .feature-card:hover { border-color: #9FE1CB; box-shadow: 0 4px 16px rgba(29,158,117,0.08); transform: translateY(-2px); }
+  .feature-card.accent {
+    background: var(--green-light);
+    border-color: #9FE1CB;
+    grid-column: span 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .feature-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 18px;
+  }
+  .feature-card.accent .feature-icon { background: white; }
+  .feature-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .feature-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .feature-card.accent h3 { color: var(--green-dark); font-size: 18px; }
+  .feature-card.accent p { color: var(--green-dark); opacity: 0.8; max-width: 400px; }
+  .carbon-score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .carbon-score-display .big { font-size: 48px; font-weight: 500; font-family: var(--mono); color: var(--green-dark); letter-spacing: -2px; }
+  .carbon-score-display .lbl { font-size: 12px; color: var(--green); }
+
+  /* ── cta ── */
+  .cta-section {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--text);
+    border-radius: 16px;
+    margin-bottom: 4rem;
+    animation: fadeUp 0.4s ease 0.1s both;
+  }
+  .cta-section h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 500; color: white; letter-spacing: -0.5px; margin-bottom: 0.75rem; }
+  .cta-section p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 2rem; line-height: 1.7; }
+  .cta-section .btn-primary { background: var(--green); font-size: 15px; padding: 14px 36px; }
+  .cta-section .btn-primary:hover { background: #25c48f; }
+
+  /* ── footer ── */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 0.5px solid var(--border);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- hero -->
+<div class="hero">
+  <div class="hero-tag"><div class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--green);"></div>ESG · Financial Literacy · Impact</div>
+  <h1>Invest economically.<br>Live <span>ecologically</span>.</h1>
+  <p>Eco is a simulated stock portfolio where your returns and your carbon footprint both matter. No one should have to compromise their ethics for money. Learn to invest — and understand the impact of every dollar.</p>
+  <div class="hero-actions">
+    <a class="btn-primary">Start with $10,000 →</a>
+    <a class="btn-secondary">View Portfolio</a>
+  </div>
+</div>
+
+<!-- stats strip -->
+<div class="stats-strip">
+  <div class="stat-item"><div class="num">$10k</div><div class="lbl">Starting balance</div></div>
+  <div class="stat-item"><div class="num" style="color:var(--green);">30+</div><div class="lbl">Curated ESG stocks</div></div>
+  <div class="stat-item"><div class="num">3</div><div class="lbl">ESG dimensions scored</div></div>
+  <div class="stat-item"><div class="num" style="color:var(--green);">Real</div><div class="lbl">Live NYSE prices</div></div>
+</div>
+<div class="full-stock-page">
+<!-- how it works -->
+<div style="text-align:center;margin-bottom:0.5rem;">
+  <div class="section-title">How it works</div>
+  <div class="section-heading">Three steps to invest with purpose</div>
+</div>
+
+<div class="steps">
+  <div class="step-card">
+    <div class="step-num">01</div>
+    <h3>Pick your stocks</h3>
+    <p>Browse real NYSE companies with live prices. Each stock comes with full financial metrics and an ESG breakdown explaining exactly how ethical it is.</p>
+  </div>
+  <div class="step-card">
+    <div class="step-num">02</div>
+    <h3>Build your portfolio</h3>
+    <p>Buy and sell with your simulated $10,000. Watch your balance grow — but keep an eye on your carbon impact score too.</p>
+  </div>
+  <div class="step-card">
+    <div class="step-num">03</div>
+    <h3>Beat the leaderboard</h3>
+    <p>Compete to get the highest returns with the lowest carbon impact. The best investors balance both — can you?</p>
+  </div>
+</div>
+
+<!-- features -->
+<div style="text-align:center;margin-bottom:0.5rem;">
+  <div class="section-title">What makes Eco different</div>
+  <div class="section-heading">More than a stock simulator</div>
+</div>
+
+<div class="features">
+  <div class="feature-card accent">
+    <div>
+      <div class="feature-icon">🌱</div>
+      <h3>Carbon impact score</h3>
+      <p>Every stock you hold contributes to your portfolio's carbon footprint. High returns aren't enough — you need to think about what you're funding.</p>
+    </div>
+    <div class="carbon-score-display">
+      <div class="big">82</div>
+      <div class="lbl">Low impact portfolio</div>
+    </div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">📊</div>
+    <h3>Real financial data</h3>
+    <p>Live prices, analyst recommendations, earnings surprises, key ratios — everything a real investor would look at, explained clearly.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🎓</div>
+    <h3>Built to teach</h3>
+    <p>Every metric comes with context. P/B ratio, gross margin, beta — Eco explains what it means and why it matters before you invest.</p>
+  </div>
+</div>
+</div>
+<!-- cta -->
+<div class="cta-section">
+  <h2>Ready to invest with purpose?</h2>
+  <p>You have $10,000 and 30+ stocks to choose from.<br>Make money. Make an impact. See if you can do both.</p>
+  <a class="btn-primary">Browse Stocks →</a>
+</div>
+
+<!-- footer -->
+<div class="footer">
+  Made with love for Hackonomics 2026 · All trades are simulated · Data sourced from Finnhub
+</div>
+
+{% endblock %}

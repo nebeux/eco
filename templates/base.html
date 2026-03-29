@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+    <title>Eco</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --bg-subtle: #f5f5f5;
+    --border: #e2e2e2;
+    --text: #1a1a1a;
+    --muted: #666666;
+    --nav-bg: #ffffff;
+    --card-bg: #ffffff;
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --mono: 'DM Mono', monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0f0f0f;
+    --bg-subtle: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #888888;
+    --nav-bg: #111111;
+    --card-bg: #161616;
+    --green: #1D9E75;
+    --green-dark: #25c48f;
+    --green-light: #0d2b22;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.2s, color 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 60px;
+    background: var(--nav-bg);
+    border-bottom: 0.5px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: #1D9E75;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo-icon svg { width: 16px; height: 16px; }
+  .logo-text {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .logo-text span { color: #1D9E75; }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-links a {
+    text-decoration: none;
+    font-size: 14px;
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 8px;
+    transition: background 0.15s, color 0.15s;
+    cursor: pointer;
+  }
+  .nav-links a:hover {
+    background: var(--bg-subtle);
+    color: var(--text);
+  }
+  .nav-links a.active {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-weight: 500;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .balance {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--bg-subtle);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .balance strong {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .carbon-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--green-dark);
+    background: var(--green-light);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1D9E75;
+  }
+
+  /* ── dark mode toggle ── */
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    background: var(--bg-subtle);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover {
+    background: var(--border);
+  }
+  .theme-toggle svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    transition: opacity 0.15s;
+  }
+  .icon-sun  { display: none; }
+  .icon-moon { display: block; }
+  [data-theme="dark"] .icon-sun  { display: block; }
+  [data-theme="dark"] .icon-moon { display: none; }
+
+  /* ── page cards / strips pick up dark vars ── */
+  .stats-strip  { background: var(--card-bg) !important; }
+  .step-card    { background: var(--card-bg) !important; }
+  .feature-card { background: var(--card-bg) !important; }
+  .btn-secondary {
+    background: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+  .btn-secondary:hover { background: var(--bg-subtle) !important; }
+</style>
+
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-icon">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 2C8 2 4 5 4 9C4 11.2 5.8 13 8 13C10.2 13 12 11.2 12 9C12 5 8 2 8 2Z" fill="white" opacity="0.9"/>
+        <path d="M8 13V10M8 10C8 10 6 8.5 6 7M8 10C8 10 10 8.5 10 7" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="logo-text">e<span>co</span></span>
+  </a>
+
+  <div class="nav-links">
+    <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' }}">Home</a>
+    <a href="{{ url_for('stocks') }}" class="{{ 'active' if request.endpoint in ['stocks', 'stock'] }}">Stocks</a>
+    <a href="{{ url_for('portfolio') }}" class="{{ 'active' if request.endpoint == 'portfolio' }}">Portfolio</a>
+    <a href="{{ url_for('leaderboard') }}" class="{{ 'active' if request.endpoint == 'leaderboard' }}">Leaderboard</a>
+  </div>
+
+  <div class="nav-right">
+    {% if session.get('user') %}
+      <div class="balance">Balance <strong id="balance">${{ nav_balance }}</strong></div>
+      <a href="{{ url_for('logout') }}" style="font-size: 13px; color: var(--red); text-decoration: none;">Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="btn-primary" style="padding: 6px 16px; font-size: 13px;">Login</a>
+    {% endif %}
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <!-- sun (shown in dark mode) -->
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <line x1="12" y1="2" x2="12" y2="4"/>
+        <line x1="12" y1="20" x2="12" y2="22"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="2" y1="12" x2="4" y2="12"/>
+        <line x1="20" y1="12" x2="22" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <!-- moon (shown in light mode) -->
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<script>
+  // persist preference across pages
+  (function() {
+    const saved = localStorage.getItem('eco-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  })();
+
+  document.getElementById('themeToggle').addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('eco-theme', next);
+  });
+</script>
+
+<script src="/static/js/main.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page" style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+    <div class="card" style="width: 100%; max-width: 400px; padding: 2.5rem;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-size: 24px; margin-bottom: 8px;">
+                {{ 'Welcome Back' if action == 'login' else 'Create Account' }}
+            </h2>
+            <p style="font-size: 14px; color: var(--muted);">
+                {{ 'Enter your details to access your portfolio' if action == 'login' else 'Join the eco-friendly investing community' }}
+            </p>
+        </div>
+
+        <form method="POST">
+            <div class="buy-input-wrap">
+                <label class="buy-input-label">Username</label>
+                <input type="text" name="username" class="buy-input" placeholder="e.g. green_investor" required>
+            </div>
+            
+            <div class="buy-input-wrap" style="margin-top: 1rem;">
+                <label class="buy-input-label">Password</label>
+                <input type="password" name="password" class="buy-input" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="buy-action" style="margin-top: 1.5rem;">
+                {{ 'Login' if action == 'login' else 'Register' }}
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 13px;">
+            <span style="color: var(--muted);">
+                {{ "Don't have an account?" if action == 'login' else "Already have an account?" }}
+            </span>
+            <a href="{{ url_for('register' if action == 'login' else 'login') }}" style="color: var(--green); text-decoration: none; font-weight: 500; margin-left: 4px;">
+                {{ 'Sign Up' if action == 'login' else 'Log In' }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

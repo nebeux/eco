@@ -1,0 +1,293 @@
+import os
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from services.stockdata import get_metrics, get_quote, get_company_profile, get_recommendations
+from services.stockdata import search_stocks as do_search
+from services.esg_data import STOCKS, ESG_SCORES
+
+app = Flask(__name__)
+app.secret_key = 'super_secret_eco_key'
+
+# ── database ──────────────────────────────────────────
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# ── models ────────────────────────────────────────────
+class User(db.Model):
+    id           = db.Column(db.Integer, primary_key=True)
+    username     = db.Column(db.String(80), unique=True, nullable=False)
+    password     = db.Column(db.String(120), nullable=False)
+    balance      = db.Column(db.Float, default=10000.0)
+
+class Holding(db.Model):
+    id        = db.Column(db.Integer, primary_key=True)
+    user_id   = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    symbol    = db.Column(db.String(10), nullable=False)
+    shares    = db.Column(db.Float, nullable=False)
+    avg_price = db.Column(db.Float, nullable=False)
+
+class Transaction(db.Model):
+    id        = db.Column(db.Integer, primary_key=True)
+    user_id   = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    symbol    = db.Column(db.String(10), nullable=False)
+    shares    = db.Column(db.Float, nullable=False)
+    price     = db.Column(db.Float, nullable=False)
+    type      = db.Column(db.String(4), nullable=False)  # 'buy' or 'sell'
+    timestamp = db.Column(db.DateTime, default=db.func.now())
+
+class PortfolioSnapshot(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    value      = db.Column(db.Float, nullable=False)
+    timestamp  = db.Column(db.DateTime, default=db.func.now())
+
+with app.app_context():
+    db.create_all()
+
+# ── helpers ───────────────────────────────────────────
+def get_current_user():
+    if 'user' not in session:
+        return None
+    return User.query.filter_by(username=session['user']).first()
+
+def login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not get_current_user():
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+# ── auth ──────────────────────────────────────────────
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists.', 'error')
+            return redirect(url_for('register'))
+        new_user = User(username=username, password=generate_password_hash(password))
+        db.session.add(new_user)
+        db.session.commit()
+        db.session.add(PortfolioSnapshot(user_id=new_user.id, value=10000.0))
+        db.session.commit()
+        flash('Account created! Please login.', 'success')
+        return redirect(url_for('login'))
+    return render_template('auth.html', action='register')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, password):
+            session['user'] = user.username
+            return redirect(url_for('index'))
+        flash('Invalid username or password.', 'error')
+        return redirect(url_for('login'))
+    return render_template('auth.html', action='login')
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('index'))
+
+# ── pages ─────────────────────────────────────────────
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/stocks')
+def stocks():
+    return render_template('stocks.html', stocks=STOCKS, esg_scores=ESG_SCORES)
+
+@app.route('/stock/<symbol>')
+def stock(symbol):
+    symbol = symbol.upper()
+    profile = get_company_profile(symbol)
+    quote   = get_quote(symbol)
+    metrics = get_metrics(symbol)
+    rec     = get_recommendations(symbol)
+    esg     = ESG_SCORES.get(symbol, {"environmental": 50, "social": 50, "governance": 50, "carbon": 50})
+
+    # pass user's current holding for this stock if logged in
+    user = get_current_user()
+    holding = None
+    if user:
+        holding = Holding.query.filter_by(user_id=user.id, symbol=symbol).first()
+
+    return render_template('stock.html',
+        symbol=symbol, profile=profile, quote=quote,
+        metrics=metrics, rec=rec, esg=esg,
+        holding=holding, balance=user.balance if user else None
+    )
+
+@app.route('/portfolio')
+@login_required
+def portfolio():
+    user     = get_current_user()
+    holdings = Holding.query.filter_by(user_id=user.id).all()
+    transactions = Transaction.query.filter_by(user_id=user.id).order_by(Transaction.timestamp.desc()).limit(20).all()
+    return render_template('portfolio.html', user=user, holdings=holdings, transactions=transactions)
+
+@app.route('/leaderboard')
+def leaderboard():
+    users = User.query.all()
+    board = []
+    for u in users:
+        holdings = Holding.query.filter_by(user_id=u.id).all()
+        portfolio_value = u.balance
+        for h in holdings:
+            try:
+                q = get_quote(h.symbol)
+                portfolio_value += h.shares * q['current']
+            except:
+                portfolio_value += h.shares * h.avg_price
+        board.append({'username': u.username, 'value': round(portfolio_value, 2)})
+    board.sort(key=lambda x: x['value'], reverse=True)
+    return render_template('leaderboard.html', board=board)
+
+# ── api: portfolio data ───────────────────────────────
+@app.route('/api/portfolio')
+@login_required
+def api_portfolio():
+    user     = get_current_user()
+    holdings = Holding.query.filter_by(user_id=user.id).all()
+    result   = []
+    total_invested = 0
+    total_value    = 0
+    for h in holdings:
+        try:
+            q        = get_quote(h.symbol)
+            cur      = q['current']
+        except:
+            cur      = h.avg_price
+        value        = h.shares * cur
+        cost         = h.shares * h.avg_price
+        total_value    += value
+        total_invested += cost
+        result.append({
+            'symbol':    h.symbol,
+            'shares':    h.shares,
+            'avg_price': round(h.avg_price, 2),
+            'cur_price': round(cur, 2),
+            'value':     round(value, 2),
+            'gain':      round(value - cost, 2),
+            'gain_pct':  round(((value - cost) / cost) * 100, 2) if cost else 0
+        })
+    return jsonify({
+        'balance':         round(user.balance, 2),
+        'holdings':        result,
+        'total_value':     round(total_value + user.balance, 2),
+        'total_gain':      round((total_value + user.balance) - 10000, 2),
+        'total_gain_pct':  round(((total_value + user.balance - 10000) / 10000) * 100, 2)
+    })
+
+# ── api: buy ──────────────────────────────────────────
+@app.route('/api/buy', methods=['POST'])
+@login_required
+def buy():
+    data   = request.json
+    symbol = data['symbol'].upper()
+    shares = float(data['shares'])
+    price  = float(data['price'])
+    total  = shares * price
+
+    user = get_current_user()
+    if user.balance < total:
+        return jsonify({'error': 'Insufficient funds'}), 400
+
+    user.balance -= total
+
+    existing = Holding.query.filter_by(user_id=user.id, symbol=symbol).first()
+    if existing:
+        new_shares    = existing.shares + shares
+        new_avg       = ((existing.shares * existing.avg_price) + total) / new_shares
+        existing.shares    = new_shares
+        existing.avg_price = new_avg
+    else:
+        db.session.add(Holding(user_id=user.id, symbol=symbol, shares=shares, avg_price=price))
+
+    db.session.add(Transaction(user_id=user.id, symbol=symbol, shares=shares, price=price, type='buy'))
+    db.session.commit()
+    save_snapshot(user)
+    return jsonify({'success': True, 'new_balance': round(user.balance, 2)})
+
+# ── api: sell ─────────────────────────────────────────
+@app.route('/api/sell', methods=['POST'])
+@login_required
+def sell():
+    data   = request.json
+    symbol = data['symbol'].upper()
+    shares = float(data['shares'])
+    price  = float(data['price'])
+    total  = shares * price
+
+    user     = get_current_user()
+    existing = Holding.query.filter_by(user_id=user.id, symbol=symbol).first()
+
+    if not existing or existing.shares < shares:
+        return jsonify({'error': 'Not enough shares'}), 400
+
+    user.balance      += total
+    existing.shares   -= shares
+    if existing.shares == 0:
+        db.session.delete(existing)
+
+    db.session.add(Transaction(user_id=user.id, symbol=symbol, shares=shares, price=price, type='sell'))
+    db.session.commit()
+    save_snapshot(user)
+    return jsonify({'success': True, 'new_balance': round(user.balance, 2)})
+
+# ── api: misc ─────────────────────────────────────────
+@app.route('/api/quote/<symbol>')
+def quote(symbol):
+    return jsonify(get_quote(symbol))
+
+@app.route('/api/search/<query>')
+def search_stocks(query):
+    return jsonify(do_search(query))
+
+@app.route('/api/candles/<symbol>/<period>')
+def candles(symbol, period):
+    from services.stockdata import get_candles
+    return jsonify(get_candles(symbol, period))
+
+# ── context processor ─────────────────────────────────────────
+@app.context_processor
+def inject_user():
+    user = get_current_user()
+    return {
+        'current_user': user,
+        'nav_balance': f"{user.balance:.2f}" if user else '10,000.00'
+    }
+# ── portfolio ─────────────────────────────────────────
+
+def save_snapshot(user):
+    holdings = Holding.query.filter_by(user_id=user.id).all()
+    total = user.balance
+    for h in holdings:
+        try:
+            total += h.shares * get_quote(h.symbol)['current']
+        except:
+            total += h.shares * h.avg_price
+    db.session.add(PortfolioSnapshot(user_id=user.id, value=round(total, 2)))
+    db.session.commit()
+
+@app.route('/api/portfolio/history')
+@login_required
+def portfolio_history():
+    user = get_current_user()
+    snapshots = PortfolioSnapshot.query.filter_by(user_id=user.id).order_by(PortfolioSnapshot.timestamp).all()
+    return jsonify([{
+        'time': s.timestamp.strftime('%b %d %H:%M'),
+        'value': s.value
+    } for s in snapshots])
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')

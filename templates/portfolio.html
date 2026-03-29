@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  .portfolio-header { margin-bottom: 2rem; animation: fadeUp 0.3s ease both; }
+  .portfolio-header h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.4px; }
+  .portfolio-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* ── summary cards ── */
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; animation: fadeUp 0.3s ease 0.05s both; }
+  .summary-card { background: white; border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+  .summary-card .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .summary-card .val { font-size: 24px; font-weight: 500; font-family: var(--mono); letter-spacing: -0.5px; }
+  .summary-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ── holdings table ── */
+  .holdings-card { background: white; border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; animation: fadeUp 0.3s ease 0.1s both; }
+  .holdings-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .holdings-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 0.5px solid var(--border); }
+  .holdings-table td { padding: 12px; border-bottom: 0.5px solid var(--border); }
+  .holdings-table tr:last-child td { border-bottom: none; }
+  .holdings-table tr:hover td { background: #f7f8f6; }
+  .symbol-cell { font-weight: 500; font-family: var(--mono); }
+  .name-cell { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .num-cell { font-family: var(--mono); text-align: right; }
+  .gain-cell { font-family: var(--mono); text-align: right; font-weight: 500; }
+  .sell-btn { font-size: 12px; padding: 4px 12px; border-radius: 6px; border: 0.5px solid var(--red); color: var(--red); background: white; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .sell-btn:hover { background: var(--red-light); }
+  .empty-holdings { text-align: center; padding: 3rem; color: var(--muted); font-size: 14px; }
+
+  /* ── transactions ── */
+  .tx-card { background: white; border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; animation: fadeUp 0.3s ease 0.15s both; }
+  .tx-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-type { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
+  .tx-buy { background: var(--green-light); color: var(--green-dark); }
+  .tx-sell { background: var(--red-light); color: var(--red); }
+  .tx-symbol { font-weight: 500; font-family: var(--mono); }
+  .tx-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .tx-amount { font-family: var(--mono); font-weight: 500; text-align: right; }
+  .tx-time { font-size: 11px; color: var(--muted); text-align: right; margin-top: 2px; }
+
+  /* ── sell modal ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 12px; padding: 1.5rem; width: 360px; }
+  .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 1rem; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+  .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; transition: all 0.15s; }
+  .modal-cancel { background: #f5f5f5; color: var(--text); }
+  .modal-cancel:hover { background: #e8e8e8; }
+  .modal-confirm { background: var(--red); color: white; }
+  .modal-confirm:hover { background: #c43a39; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="full-stock-page">
+
+  <div class="portfolio-header">
+    <h1>{{ user.username }}'s Portfolio</h1>
+    <p>Track your holdings, gains, and transaction history</p>
+  </div>
+
+  <!-- summary cards (populated by JS) -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="lbl">Cash Balance</div>
+      <div class="val" id="cash">${{ "%.2f"|format(user.balance) }}</div>
+      <div class="sub">Available to invest</div>
+    </div>
+    <div class="summary-card">
+      <div class="lbl">Portfolio Value</div>
+      <div class="val" id="totalVal">Loading...</div>
+      <div class="sub">Cash + holdings</div>
+    </div>
+    <div class="summary-card">
+      <div class="lbl">Total Gain / Loss</div>
+      <div class="val" id="totalGain">Loading...</div>
+      <div class="sub" id="totalGainPct">vs $10,000 starting</div>
+    </div>
+    <div class="summary-card">
+      <div class="lbl">Holdings</div>
+      <div class="val">{{ holdings|length }}</div>
+      <div class="sub">Active positions</div>
+    </div>
+  </div>
+  <!-- holdings -->
+   <div class="holdings-card" style="margin-bottom:1.5rem;">
+  <div class="card-header">
+    <div class="card-title">Portfolio Value Over Time</div>
+  </div>
+  <div style="height:220px;">
+    <canvas id="portfolioChart"></canvas>
+  </div>
+</div>
+  <div class="holdings-card">
+    <div class="card-header">
+      <div class="card-title">Holdings</div>
+    </div>
+    {% if holdings %}
+    <table class="holdings-table">
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th style="text-align:right">Shares</th>
+          <th style="text-align:right">Avg Cost</th>
+          <th style="text-align:right">Current</th>
+          <th style="text-align:right">Value</th>
+          <th style="text-align:right">Gain / Loss</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in holdings %}
+        <tr>
+          <td>
+            <div class="symbol-cell">{{ h.symbol }}</div>
+          </td>
+          <td class="num-cell">{{ "%.4f"|format(h.shares) }}</td>
+          <td class="num-cell">${{ "%.2f"|format(h.avg_price) }}</td>
+          <td class="num-cell" id="cur-{{ h.symbol }}">—</td>
+          <td class="num-cell" id="val-{{ h.symbol }}">—</td>
+          <td class="gain-cell" id="gain-{{ h.symbol }}">—</td>
+          <td style="text-align:right">
+            <button class="sell-btn" onclick="openSellModal('{{ h.symbol }}', {{ h.shares }})">Sell</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-holdings">
+      You don't own any stocks yet. <a href="{{ url_for('stocks') }}" style="color:var(--green);">Browse stocks →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- recent transactions -->
+  <div class="tx-card">
+    <div class="card-header">
+      <div class="card-title">Recent Transactions</div>
+    </div>
+    {% if transactions %}
+      {% for tx in transactions %}
+      <div class="tx-row">
+        <div>
+          <span class="tx-type {{ 'tx-buy' if tx.type == 'buy' else 'tx-sell' }}">{{ tx.type|upper }}</span>
+          <span class="tx-symbol">{{ tx.symbol }}</span>
+          <div class="tx-detail">{{ "%.4f"|format(tx.shares) }} shares @ ${{ "%.2f"|format(tx.price) }}</div>
+        </div>
+        <div>
+          <div class="tx-amount {{ 'down' if tx.type == 'buy' else 'up' }}">
+            {{ '-' if tx.type == 'buy' else '+' }}${{ "%.2f"|format(tx.shares * tx.price) }}
+          </div>
+          <div class="tx-time">{{ tx.timestamp.strftime('%b %d, %Y %H:%M') }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;padding:2rem;color:var(--muted);font-size:14px;">No transactions yet.</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- sell modal -->
+<div class="modal-overlay" id="sellModal">
+  <div class="modal">
+    <div class="modal-title">Sell <span id="modalSymbol"></span></div>
+    <div class="buy-input-wrap">
+      <div class="buy-input-label">Shares to sell (max: <span id="modalMax"></span>)</div>
+      <input class="buy-input" type="number" id="modalShares" min="0.0001" step="0.0001"/>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-top:8px;">
+      Estimated proceeds: <strong id="modalProceeds">$0.00</strong>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeSellModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmSell()">Confirm Sell</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let sellSymbol = '';
+  let sellMaxShares = 0;
+  let currentPrices = {};
+
+  // fetch live prices for all holdings and update table
+  fetch('/api/portfolio/history')
+  .then(r => r.json())
+  .then(data => {
+    if (data.length < 2) {
+      document.getElementById('portfolioChart').parentElement.innerHTML = 
+        '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:13px;">Make your first trade to start tracking your portfolio value.</div>';
+      return;
+    }
+    const ctx = document.getElementById('portfolioChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.map(d => d.time),
+        datasets: [{
+          data: data.map(d => d.value),
+          borderColor: '#1D9E75',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#1D9E75',
+          tension: 0.4,
+          fill: true,
+          backgroundColor: 'rgba(29,158,117,0.08)'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { family: 'DM Mono', size: 11 }, color: '#6b6b68' } },
+          y: {
+            grid: { color: '#f0f0f0' },
+            ticks: { font: { family: 'DM Mono', size: 11 }, color: '#6b6b68', callback: v => '$' + v.toLocaleString() }
+          }
+        }
+      }
+    });
+  });
+  const symbols = [{% for h in holdings %}'{{ h.symbol }}',{% endfor %}];
+const avgPrices = { {% for h in holdings %}'{{ h.symbol }}': {{ h.avg_price }}, {% endfor %}};
+const shares = { {% for h in holdings %}'{{ h.symbol }}': {{ h.shares }}, {% endfor %}};
+
+  let totalHoldingsValue = 0;
+  let fetched = 0;
+
+  function updateSummary() {
+    fetch('/api/portfolio')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('totalVal').textContent = '$' + data.total_value.toLocaleString('en-US', {minimumFractionDigits: 2});
+        const gainEl = document.getElementById('totalGain');
+        const up = data.total_gain >= 0;
+        gainEl.textContent = (up ? '+' : '') + '$' + data.total_gain.toFixed(2);
+        gainEl.style.color = up ? 'var(--green)' : 'var(--red)';
+        document.getElementById('totalGainPct').textContent = (up ? '+' : '') + data.total_gain_pct.toFixed(2) + '% vs $10,000 starting';
+      });
+  }
+
+  symbols.forEach(symbol => {
+    fetch(`/api/quote/${symbol}`)
+      .then(r => r.json())
+      .then(q => {
+        currentPrices[symbol] = q.current;
+        const cur   = q.current;
+        const val   = shares[symbol] * cur;
+        const cost  = shares[symbol] * avgPrices[symbol];
+        const gain  = val - cost;
+        const gainPct = ((gain / cost) * 100).toFixed(2);
+        const up    = gain >= 0;
+
+        document.getElementById(`cur-${symbol}`).textContent = '$' + cur.toFixed(2);
+        document.getElementById(`val-${symbol}`).textContent = '$' + val.toFixed(2);
+        const gainEl = document.getElementById(`gain-${symbol}`);
+        gainEl.textContent = (up ? '+' : '') + '$' + gain.toFixed(2) + ' (' + (up ? '+' : '') + gainPct + '%)';
+        gainEl.style.color = up ? 'var(--green)' : 'var(--red)';
+      });
+  });
+
+  updateSummary();
+
+  // sell modal
+  function openSellModal(symbol, maxShares) {
+    sellSymbol = symbol;
+    sellMaxShares = maxShares;
+    document.getElementById('modalSymbol').textContent = symbol;
+    document.getElementById('modalMax').textContent = maxShares;
+    document.getElementById('modalShares').value = maxShares;
+    document.getElementById('modalShares').max = maxShares;
+    updateProceeds();
+    document.getElementById('sellModal').classList.add('open');
+  }
+
+  function closeSellModal() {
+    document.getElementById('sellModal').classList.remove('open');
+  }
+
+  function updateProceeds() {
+    const s = parseFloat(document.getElementById('modalShares').value) || 0;
+    const price = currentPrices[sellSymbol] || 0;
+    document.getElementById('modalProceeds').textContent = '$' + (s * price).toFixed(2);
+  }
+
+  document.getElementById('modalShares').addEventListener('input', updateProceeds);
+
+  function confirmSell() {
+    const s = parseFloat(document.getElementById('modalShares').value);
+    const price = currentPrices[sellSymbol];
+    if (!s || s <= 0 || s > sellMaxShares) return alert('Invalid share amount.');
+    fetch('/api/sell', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({symbol: sellSymbol, shares: s, price: price})
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return alert(data.error);
+      closeSellModal();
+      window.location.reload();
+    });
+  }
+
+  // close modal on overlay click
+  document.getElementById('sellModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSellModal();
+  });
+</script>
+{% endblock %}

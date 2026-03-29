@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+.help-btn {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #f0f0f0; border: 0.5px solid var(--border);
+  color: var(--muted); font-size: 11px; font-weight: 500;
+  cursor: pointer; display: inline-flex; align-items: center;
+  justify-content: center; transition: all 0.15s; flex-shrink: 0;
+  margin-left: 6px;
+}
+.help-btn:hover { background: var(--green-light); color: var(--green-dark); border-color: #9FE1CB; }
+.help-tooltip {
+  display: none;
+  background: var(--text);
+  color: white;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.help-tooltip.open { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="full-stock-page">
+<div class="stock-header">
+  <div class="stock-identity">
+    <div class="stock-logo">
+      {% if profile.logo %}
+        <img src="{{ profile.logo }}" alt="{{ symbol }}" style="width:48px; height:48px; border-radius:8px;">
+      {% else %}
+        {{ symbol[:2] }}
+      {% endif %}
+    </div>
+    <div class="stock-name">
+      <h1>{{ profile.name or symbol }}</h1>
+      <p>{{ symbol }} · {{ profile.finnhubIndustry or 'Technology' }} · {{ profile.exchange or 'NASDAQ' }}</p>
+    </div>
+  </div>
+  <div class="stock-price-block">
+    <div class="stock-price">${{ "%.2f"|format(quote.current) }}</div>
+    <div class="stock-change {{ 'down' if quote.change < 0 else 'up' }}">
+      {{ '▼' if quote.change < 0 else '▲' }} ${{ "%.2f"|format(quote.change|abs) }} ({{ quote.change_pct }}%) today
+    </div>
+  </div>
+</div>
+
+<div class="esg-hero">
+  <div class="esg-card env">
+    <div class="esg-label">Environmental</div>
+    <div class="esg-score env">{{ esg.environmental }} / 100</div>
+    <div class="esg-bar-bg"><div class="esg-bar env" style="width:{{ esg.environmental }}%"></div></div>
+    <div class="esg-desc">Emissions intensity and renewable energy usage metrics for {{ symbol }}.</div>
+  </div>
+  <div class="esg-card social">
+    <div class="esg-label">Social</div>
+    <div class="esg-score social">{{ esg.social }} / 100</div>
+    <div class="esg-bar-bg"><div class="esg-bar social" style="width:{{ esg.social }}%"></div></div>
+    <div class="esg-desc">Labor practices, diversity, and community engagement scores.</div>
+  </div>
+  <div class="esg-card gov">
+    <div class="esg-label">Governance</div>
+    <div class="esg-score gov">{{ esg.governance }} / 100</div>
+    <div class="esg-bar-bg"><div class="esg-bar gov" style="width:{{ esg.governance }}%"></div></div>
+    <div class="esg-desc">Board structure, executive pay, and business ethics reporting.</div>
+  </div>
+</div>
+
+<div class="carbon-hero">
+  <div class="carbon-left">
+    <div class="carbon-icon">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 3C10 3 6 6.5 6 11C6 13.2 7.8 15 10 15C12.2 15 14 13.2 14 11C14 6.5 10 3 10 3Z" fill="white" opacity="0.9"/>
+        <path d="M10 15V12M10 12C10 12 8 10.5 8 9M10 12C10 12 12 10.5 12 9" stroke="white" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="carbon-title">Carbon Impact Score</div>
+      <div class="carbon-sub">Based on Scope 1, 2 & 3 emissions data</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="carbon-score-big">{{ esg.carbon }} / 100</div>
+    <div class="carbon-rating">{% if esg.carbon > 70 %}Low Impact{% elif esg.carbon > 40 %}Moderate{% else %}High Impact{% endif %}</div>
+  </div>
+</div>
+
+<div class="main-grid">
+  <div>
+
+    <!-- price chart -->
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;">
+          <div class="card-title">Price History</div>
+          <button class="help-btn" onclick="toggleHelp('help-chart')">?</button>
+        </div>
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="switchPeriod(this, '1D')">1D</button>
+          <button class="period-tab" onclick="switchPeriod(this, '1M')">1M</button>
+          <button class="period-tab" onclick="switchPeriod(this, '1Y')">1Y</button>
+          <button class="period-tab" onclick="switchPeriod(this, '5Y')">5Y</button>
+          <button class="period-tab" onclick="switchPeriod(this, 'ALL')">All</button>
+        </div>
+      </div>
+      <div class="help-tooltip" id="help-chart">
+        This chart shows how the stock price has changed over time. Use the buttons to switch between different time ranges. A rising line means the stock has gained value — a falling line means it has lost value. The shaded area below the line helps you see the overall trend at a glance.
+      </div>
+      <div class="chart-wrap" style="position:relative;">
+        <canvas id="priceChart"></canvas>
+        <div id="chart-error" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);align-items:center;justify-content:center;text-align:center;font-size:13px;color:var(--muted);">
+          Chart data unavailable.
+        </div>
+      </div>
+    </div>
+
+    <!-- price & range -->
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;">
+          <div class="card-title">Price & Range</div>
+          <button class="help-btn" onclick="toggleHelp('help-price')">?</button>
+        </div>
+      </div>
+      <div class="help-tooltip" id="help-price">
+        Shows where the stock price is right now and how much it has moved today. The 52-week range bar shows where today's price sits between the lowest and highest price over the past year. If the dot is near the right side, the stock is trading close to its yearly high.
+      </div>
+      <div class="stat-row"><span class="stat-label">Current Price</span><span class="stat-value">${{ quote.current }}</span></div>
+      <div class="stat-row"><span class="stat-label">Today's Change</span><span class="stat-value {{ 'down' if quote.change < 0 else 'up' }}">{{ '−' if quote.change < 0 else '' }}${{ quote.change|abs }} ({{ quote.change_pct }}%)</span></div>
+      <div class="stat-row"><span class="stat-label">Day's Range</span><span class="stat-value">${{ quote.low }} — ${{ quote.high }}</span></div>
+      <div class="stat-row">
+        <span class="stat-label">52 Week Range</span>
+        <div style="flex:1;margin-left:24px;">
+          <div class="range-bar-bg"><div class="range-bar-fill"></div></div>
+          <div class="range-labels"><span>${{ metrics['52_week_low'] or 'N/A' }}</span><span>Now: ${{ quote.current }}</span><span>${{ metrics['52_week_high'] or 'N/A' }}</span></div>
+        </div>
+      </div>
+      <div class="stat-row"><span class="stat-label">Open</span><span class="stat-value">${{ quote.open }}</span></div>
+      <div class="stat-row"><span class="stat-label">Prev. Close</span><span class="stat-value">${{ quote.prev_close }}</span></div>
+    </div>
+
+    <!-- key stats -->
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;">
+          <div class="card-title">Key Stats</div>
+          <button class="help-btn" onclick="toggleHelp('help-stats')">?</button>
+        </div>
+      </div>
+      <div class="help-tooltip" id="help-stats">
+        These numbers describe the financial health and size of the company. Beta measures how volatile the stock is — above 1 means it swings more than the average market. P/B ratio compares the stock price to the company's actual assets — a high number means investors expect strong future growth. Gross margin shows how much profit the company keeps after production costs — higher is better.
+      </div>
+      <div class="stat-row"><span class="stat-label">Beta (Volatility)</span><span class="stat-value">{{ metrics.beta or 'N/A' }}</span></div>
+      <div class="stat-row"><span class="stat-label">Market Cap</span><span class="stat-value">${{ (profile.marketCapitalization / 1000)|round(2) if profile.marketCapitalization else 'N/A' }}T</span></div>
+      <div class="stat-row"><span class="stat-label">P/B Ratio</span><span class="stat-value">{{ metrics.pb_ratio or 'N/A' }}</span></div>
+      <div class="stat-row"><span class="stat-label">Gross Margin</span><span class="stat-value up">{{ metrics.gross_margin or 'N/A' }}%</span></div>
+      <div class="stat-row"><span class="stat-label">Operating Margin</span><span class="stat-value {{ 'down' if metrics.operating_margin and metrics.operating_margin < 0 else 'up' }}">{{ metrics.operating_margin or 'N/A' }}%</span></div>
+      <div class="stat-row"><span class="stat-label">Current Ratio</span><span class="stat-value">{{ metrics.current_ratio or 'N/A' }}</span></div>
+      <div class="stat-row"><span class="stat-label">Revenue Growth (5Y)</span><span class="stat-value up">{{ metrics.revenue_growth_5y or 'N/A' }}%</span></div>
+    </div>
+
+    <!-- analyst recommendations -->
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;">
+          <div class="card-title">Analyst Recommendations</div>
+          <button class="help-btn" onclick="toggleHelp('help-recs')">?</button>
+        </div>
+        <span style="font-size:12px;color:var(--muted);">Based on {{ rec.total or 0 }} analysts</span>
+      </div>
+      <div class="help-tooltip" id="help-recs">
+        Professional analysts at banks and investment firms study companies full-time and publish recommendations. Strong Buy and Buy mean they expect the price to rise. Hold means they think it will stay roughly the same. Sell means they expect it to drop. The overall sentiment shows which way the majority leans — but analysts aren't always right.
+      </div>
+      {% if rec and rec.total > 0 %}
+      <div class="rec-row"><span class="rec-label">Strong Buy</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.strong_buy / rec.total * 100)|round }}%;background:var(--green);"></div></div><span class="rec-count">{{ rec.strong_buy }}</span></div>
+      <div class="rec-row"><span class="rec-label">Buy</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.buy / rec.total * 100)|round }}%;background:#5DCAA5;"></div></div><span class="rec-count">{{ rec.buy }}</span></div>
+      <div class="rec-row"><span class="rec-label">Hold</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.hold / rec.total * 100)|round }}%;background:#e0e0e0;"></div></div><span class="rec-count">{{ rec.hold }}</span></div>
+      <div class="rec-row"><span class="rec-label">Sell</span><div class="rec-bar-bg"><div class="rec-bar-fill" style="width:{{ (rec.sell / rec.total * 100)|round }}%;background:#F0997B;"></div></div><span class="rec-count">{{ rec.sell }}</span></div>
+      <div class="rec-summary">
+        <div class="rec-sum-item">
+          <div class="rec-sum-label">Buy signals</div>
+          <div class="rec-sum-val" style="color:var(--green);">{{ rec.buy + rec.strong_buy }}</div>
+        </div>
+        <div class="rec-sum-item">
+          <div class="rec-sum-label">Overall</div>
+          <div><span class="badge {{ 'badge-green' if rec.sentiment == 'Bullish' else 'badge-red' }}">{{ rec.sentiment }}</span></div>
+        </div>
+      </div>
+      {% else %}
+      <div style="font-size:13px;color:var(--muted);">No recommendations found.</div>
+      {% endif %}
+    </div>
+
+    <!-- earnings -->
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;">
+          <div class="card-title">Earnings Surprises</div>
+          <button class="help-btn" onclick="toggleHelp('help-earnings')">?</button>
+        </div>
+      </div>
+      <div class="help-tooltip" id="help-earnings">
+        Every quarter, companies report their earnings per share (EPS) — how much profit they made per stock. Before the report, analysts predict what they expect. A positive surprise means the company earned more than expected — this usually pushes the stock price up. Consistent positive surprises are a sign of a well-run, predictable business.
+      </div>
+      <div class="earnings-wrap"><canvas id="earningsChart"></canvas></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;">
+        Shows actual vs estimated EPS. Positive surprises mean {{ symbol }} beat market expectations.
+      </p>
+    </div>
+
+    <!-- industry -->
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;">
+          <div class="card-title">{{ profile.finnhubIndustry or 'Technology' }} Industry</div>
+          <button class="help-btn" onclick="toggleHelp('help-industry')">?</button>
+        </div>
+      </div>
+      <div class="help-tooltip" id="help-industry">
+        This shows the broader industry this company operates in. A growing industry means there is increasing demand for what this company sells — generally good for the stock price. Growth drivers are tailwinds helping the sector. Risk factors are challenges that could slow the whole industry down, not just this company.
+      </div>
+      <span class="badge badge-green" style="margin-bottom:10px;display:inline-block;">↑ Growing</span>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">How this company fits into the broader {{ profile.finnhubIndustry }} landscape.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+        <div>
+          <div style="font-size:12px;font-weight:500;margin-bottom:6px;">Growth Drivers</div>
+          <ul class="driver-list"><li>AI Advancements</li><li>Cloud Computing</li><li>Market Expansion</li></ul>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:500;margin-bottom:6px;">Risk Factors</div>
+          <ul class="driver-list"><li class="risk">Regulatory Scrutiny</li><li class="risk">Supply Chain Risk</li><li class="risk">Market Saturation</li></ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- right column -->
+  <div class="right-col">
+
+    <div class="carbon-side">
+      <div style="display:flex;align-items:center;margin-bottom:12px;">
+        <div class="carbon-side-title" style="margin-bottom:0;">Carbon Breakdown</div>
+        <button class="help-btn" onclick="toggleHelp('help-carbon')">?</button>
+      </div>
+      <div class="help-tooltip" id="help-carbon">
+        Carbon impact measures how much this company contributes to greenhouse gas emissions. Scope 1 is direct emissions from their own operations. Scope 2 comes from the energy they buy. Scope 3 covers their entire supply chain — often the biggest source for large companies. A higher score means lower carbon impact — better for the planet and your portfolio's environmental rating.
+      </div>
+      <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 1 (Direct)</span><span class="carbon-stat-val">Low</span></div>
+      <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 2 (Energy)</span><span class="carbon-stat-val">Very Low</span></div>
+      <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 3 (Supply chain)</span><span class="carbon-stat-val">Moderate</span></div>
+      <div class="carbon-stat-row"><span class="carbon-stat-label">Net Zero Target</span><span class="carbon-stat-val">2030</span></div>
+      <div class="carbon-stat-row"><span class="carbon-stat-label">Renewables Usage</span><span class="carbon-stat-val">High</span></div>
+    </div>
+
+    <div class="buy-panel">
+      <div class="buy-panel-title">Trade {{ symbol }}</div>
+      <div class="buy-input-wrap">
+        <div class="buy-input-label">Number of shares</div>
+        <input class="buy-input" type="number" min="1" value="1" id="sharesInput"/>
+      </div>
+      <div class="buy-total">
+        <span class="buy-total-label">Estimated total</span>
+        <span class="buy-total-val" id="totalVal">${{ quote.current }}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between;">
+        <span>Available balance</span>
+        <span style="font-weight:500;color:var(--text);" data-balance>${{ "%.2f"|format(balance) if balance else '10,000.00' }}</span>
+      </div>
+      <button class="buy-action">Buy {{ symbol }}</button>
+      <button class="sell-action">Sell {{ symbol }}</button>
+      <div class="buy-note">Prices update every 30s. All trades are simulated.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Latest News</div></div>
+      <div id="newsList"><div style="font-size:13px;color:var(--muted);">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;">
+          <div class="card-title">SEC Filings</div>
+          <button class="help-btn" onclick="toggleHelp('help-sec')">?</button>
+        </div>
+      </div>
+      <div class="help-tooltip" id="help-sec">
+        Public companies must file regular reports with the SEC (Securities and Exchange Commission). A 10-K is the annual report — the most detailed look at the company's finances. A 10-Q is a quarterly update. An 8-K reports major events like earnings, mergers, or leadership changes. Reading these is what serious investors do.
+      </div>
+      <div id="filingsList"><div style="font-size:13px;color:var(--muted);">Loading...</div></div>
+    </div>
+
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const PRICE = {{ quote.current or 0 }};
+  const SYMBOL = '{{ symbol }}';
+</script>
+<script src="{{ url_for('static', filename='js/stock_trade.js') }}"></script>
+<script>
+  function toggleHelp(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  function switchPeriod(btn, period) {
+    const errorOverlay = document.getElementById('chart-error');
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    fetch(`/api/candles/${SYMBOL}/${period}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data || !data.length) { errorOverlay.style.display = 'flex'; return; }
+        errorOverlay.style.display = 'none';
+        const isUp = data[data.length - 1].price >= data[0].price;
+        const color = isUp ? '#1D9E75' : '#E24B4A';
+        priceChart.data.datasets[0].borderColor = color;
+        priceChart.data.datasets[0].backgroundColor = isUp ? 'rgba(29,158,117,0.1)' : 'rgba(226,75,74,0.1)';
+        priceChart.data.labels = data.map(d => new Date(d.time * 1000).toLocaleDateString());
+        priceChart.data.datasets[0].data = data.map(d => d.price);
+        priceChart.update();
+      })
+      .catch(() => { errorOverlay.style.display = 'flex'; });
+  }
+
+  const priceCtx = document.getElementById('priceChart').getContext('2d');
+  const priceChart = new Chart(priceCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [{ data: [], borderColor: '#1D9E75', borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.3, fill: true, backgroundColor: 'rgba(29,158,117,0.1)' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#1a1a1a', titleFont: { family: 'DM Sans', size: 12 }, bodyFont: { family: 'DM Mono', size: 14 }, displayColors: false, padding: 10, callbacks: { label: ctx => ' $' + ctx.parsed.y.toFixed(2) } }
+      },
+      scales: {
+        x: { display: false },
+        y: { position: 'right', grid: { color: '#f5f5f5', drawTicks: false }, ticks: { font: { family: 'DM Mono', size: 11 }, callback: v => '$' + v } }
+      }
+    }
+  });
+
+  const earningsCtx = document.getElementById('earningsChart').getContext('2d');
+  new Chart(earningsCtx, {
+    type: 'bar',
+    data: { labels: ['Q1', 'Q2', 'Q3', 'Q4'], datasets: [{ label: 'Actual', data: [1.53, 1.45, 1.64, 1.71], backgroundColor: '#1D9E75' }, { label: 'Estimate', data: [1.43, 1.38, 1.55, 1.60], backgroundColor: '#e0e0e0' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } } }
+  });
+
+  fetch(`/api/news/${SYMBOL}`)
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('newsList');
+      if (!data.length) { el.innerHTML = '<div style="font-size:13px;color:var(--muted);">No recent news.</div>'; return; }
+      el.innerHTML = data.map(n => `<a href="${n.url}" target="_blank" style="display:block;padding:8px 0;border-bottom:0.5px solid var(--border);text-decoration:none;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1"><div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:3px;">${n.headline}</div><div style="font-size:11px;color:var(--muted);">${n.source} · ${new Date(n.datetime * 1000).toLocaleDateString()}</div></a>`).join('');
+      el.lastElementChild.style.borderBottom = 'none';
+    });
+
+  fetch(`/api/filings/${SYMBOL}`)
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('filingsList');
+      if (!data.length) { el.innerHTML = '<div style="font-size:13px;color:var(--muted);">No filings found.</div>'; return; }
+      el.innerHTML = data.map(f => `<a href="${f.reportUrl}" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);text-decoration:none;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1"><div><div style="font-size:12px;font-weight:500;color:var(--text);">${f.form}</div><div style="font-size:11px;color:var(--muted);">${f.filedDate}</div></div><div style="font-size:11px;color:var(--green-dark);background:var(--green-light);padding:3px 8px;border-radius:4px;">View →</div></a>`).join('');
+      el.lastElementChild.style.borderBottom = 'none';
+    });
+
+  switchPeriod(document.querySelector('.period-tab.active'), '1D');
+</script>
+{% endblock %}

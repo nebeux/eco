@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  /* ── page header ── */
+  .stocks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.3s ease both;
+  }
+  .stocks-header h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.4px; }
+  .stocks-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  /* ── filters ── */
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.3s ease 0.05s both;
+  }
+  .filter-btn {
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    border: 0.5px solid var(--border);
+    background: white;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--green); color: var(--green-dark); }
+  .filter-btn.active { background: var(--green-light); border-color: #9FE1CB; color: var(--green-dark); font-weight: 500; }
+  .search-wrap { margin-left: auto; position: relative; }
+  .search-input {
+    padding: 6px 12px 6px 32px;
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: white;
+    outline: none;
+    transition: border 0.15s;
+    width: 200px;
+  }
+  .search-input:focus { border-color: var(--green); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; }
+
+  /* ── stock grid ── */
+  .stocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    animation: fadeUp 0.3s ease 0.1s both;
+  }
+
+  /* ── stock card ── */
+  .stock-card {
+    background: white;
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .stock-card:hover { border-color: #9FE1CB; box-shadow: 0 4px 16px rgba(29,158,117,0.08); transform: translateY(-2px); }
+  .stock-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .stock-card-identity { display: flex; align-items: center; gap: 10px; }
+  .stock-card-logo {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: #f0f0f0; border: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; color: var(--muted);
+  }
+  .stock-card-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .stock-card-symbol { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .stock-card-price { text-align: right; }
+  .stock-card-price .price { font-size: 16px; font-weight: 500; font-family: var(--mono); }
+  .stock-card-price .change { font-size: 12px; margin-top: 2px; }
+
+  /* ── esg mini bars ── */
+  .esg-mini { margin-bottom: 12px; }
+  .esg-mini-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .esg-mini-label { font-size: 10px; color: var(--muted); width: 18px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .esg-mini-bg { flex: 1; height: 3px; background: #eee; border-radius: 2px; }
+  .esg-mini-fill { height: 3px; border-radius: 2px; transition: width 0.6s ease; }
+  .esg-mini-val { font-size: 10px; font-family: var(--mono); color: var(--muted); width: 24px; text-align: right; }
+
+  /* ── carbon badge on card ── */
+  .stock-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 0.5px solid var(--border); }
+  .carbon-mini { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--green-dark); }
+  .carbon-mini .dot { width: 5px; height: 5px; }
+  .sector-tag { font-size: 11px; color: var(--muted); background: #f5f5f5; padding: 3px 8px; border-radius: 4px; }
+
+  /* ── empty state ── */
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); grid-column: 1/-1; }
+  .empty-state p { font-size: 14px; margin-top: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="full-stock-page">
+<!-- global stock search -->
+<div style="margin-bottom:1.5rem;animation:fadeUp 0.3s ease both;">
+  <div style="display:flex;gap:8px;">
+    <input 
+      id="globalSearch" 
+      class="search-input" 
+      type="text" 
+      placeholder="Search any NYSE stock by name or symbol..."
+      style="width:100%;padding:10px 16px;font-size:14px;"
+      oninput="globalSearchStocks(this.value)"
+    />
+  </div>
+  <div id="globalResults" style="margin-top:8px;display:none;">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Search results</div>
+    <div id="globalResultsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;"></div>
+  </div>
+</div>
+<!-- main page -->
+<div class="stocks-header">
+  <div>
+    <h1>Browse Popular Stocks</h1>
+    <p>{{ stocks|length }} stocks · click any to view details and trade</p>
+  </div>
+</div>
+
+<!-- filters -->
+<div class="filters">
+  <button class="filter-btn active" onclick="filterStocks('all', this)">All</button>
+  <button class="filter-btn" onclick="filterStocks('Technology', this)">Technology</button>
+  <button class="filter-btn" onclick="filterStocks('Clean Energy', this)">Clean Energy</button>
+  <button class="filter-btn" onclick="filterStocks('Finance', this)">Finance</button>
+  <button class="filter-btn" onclick="filterStocks('Oil & Gas', this)">Oil & Gas</button>
+  <button class="filter-btn" onclick="filterStocks('Automotive', this)">Automotive</button>
+  <button class="filter-btn" onclick="filterStocks('high-esg', this)">High ESG</button>
+  <button class="filter-btn" onclick="filterStocks('low-esg', this)">Low ESG</button>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input class="search-input" type="text" placeholder="Search stocks..." id="searchInput" oninput="searchStocks(this.value)"/>
+  </div>
+</div>
+
+<!-- stock grid -->
+<div class="stocks-grid" id="stocksGrid">
+  {% for stock in stocks %}
+  {% set esg = esg_scores[stock.symbol] %}
+  {% set carbon = esg.carbon %}
+  {% if carbon >= 75 %}
+    {% set carbon_label = 'Low impact' %}
+    {% set carbon_color = '#1D9E75' %}
+  {% elif carbon >= 45 %}
+    {% set carbon_label = 'Mid impact' %}
+    {% set carbon_color = '#EF9F27' %}
+  {% else %}
+    {% set carbon_label = 'High impact' %}
+    {% set carbon_color = '#E24B4A' %}
+  {% endif %}
+
+  <a class="stock-card"
+     href="{{ url_for('stock', symbol=stock.symbol) }}"
+     data-sector="{{ stock.sector }}"
+     data-esg="{{ (esg.environmental + esg.social + esg.governance) / 3 }}"
+     data-name="{{ stock.name }}"
+     data-symbol="{{ stock.symbol }}">
+
+    <div class="stock-card-top">
+      <div class="stock-card-identity">
+        <div class="stock-card-logo">{{ stock.symbol[:3] }}</div>
+        <div>
+          <div class="stock-card-name">{{ stock.name }}</div>
+          <div class="stock-card-symbol">{{ stock.symbol }}</div>
+        </div>
+      </div>
+      <div class="stock-card-price">
+        <div class="price">—</div>
+        <div class="change" style="color:var(--muted);">Loading...</div>
+      </div>
+    </div>
+
+    <!-- esg mini bars -->
+    <div class="esg-mini">
+      <div class="esg-mini-row">
+        <span class="esg-mini-label">E</span>
+        <div class="esg-mini-bg"><div class="esg-mini-fill" style="width:{{ esg.environmental }}%;background:#1D9E75;"></div></div>
+        <span class="esg-mini-val">{{ esg.environmental }}</span>
+      </div>
+      <div class="esg-mini-row">
+        <span class="esg-mini-label">S</span>
+        <div class="esg-mini-bg"><div class="esg-mini-fill" style="width:{{ esg.social }}%;background:#378ADD;"></div></div>
+        <span class="esg-mini-val">{{ esg.social }}</span>
+      </div>
+      <div class="esg-mini-row">
+        <span class="esg-mini-label">G</span>
+        <div class="esg-mini-bg"><div class="esg-mini-fill" style="width:{{ esg.governance }}%;background:#EF9F27;"></div></div>
+        <span class="esg-mini-val">{{ esg.governance }}</span>
+      </div>
+    </div>
+
+    <div class="stock-card-footer">
+      <div class="carbon-mini">
+        <div class="dot" style="background:{{ carbon_color }};width:5px;height:5px;border-radius:50%;"></div>
+        <span style="color:{{ carbon_color }};">{{ carbon_label }}</span>
+      </div>
+      <span class="sector-tag">{{ stock.sector }}</span>
+    </div>
+  </a>
+  {% endfor %}
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div style="font-size:24px;">🔍</div>
+    <p>No stocks match your filter.</p>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // fetch live prices for all cards
+  document.querySelectorAll('.stock-card').forEach(card => {
+    const symbol = card.dataset.symbol;
+    fetch(`/api/quote/${symbol}`)
+      .then(r => r.json())
+      .then(data => {
+        const priceEl = card.querySelector('.price');
+        const changeEl = card.querySelector('.change');
+        if (data.current) {
+          priceEl.textContent = '$' + data.current.toFixed(2);
+          const up = data.change >= 0;
+          changeEl.textContent = (up ? '▲' : '▼') + ' ' + Math.abs(data.change_pct).toFixed(2) + '%';
+          changeEl.style.color = up ? '#1D9E75' : '#E24B4A';
+        }
+      })
+      .catch(() => {
+        card.querySelector('.price').textContent = 'N/A';
+        card.querySelector('.change').textContent = '—';
+      });
+  });
+
+  // filter
+  function filterStocks(filter, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cards = document.querySelectorAll('.stock-card');
+    let visible = 0;
+    cards.forEach(card => {
+      let show = false;
+      if (filter === 'all') show = true;
+      else if (filter === 'high-esg') show = parseFloat(card.dataset.esg) >= 70;
+      else if (filter === 'low-esg') show = parseFloat(card.dataset.esg) < 45;
+      else show = card.dataset.sector === filter;
+      card.style.display = show ? 'block' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  // search
+  function searchStocks(query) {
+    const q = query.toLowerCase();
+    const cards = document.querySelectorAll('.stock-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const match = card.dataset.name.toLowerCase().includes(q) || card.dataset.symbol.toLowerCase().includes(q);
+      card.style.display = match ? 'block' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+  }
+  let searchTimeout;
+function globalSearchStocks(query) {
+  clearTimeout(searchTimeout);
+  const resultsEl = document.getElementById('globalResults');
+  const listEl = document.getElementById('globalResultsList');
+
+  if (query.length < 2) {
+    resultsEl.style.display = 'none';
+    return;
+  }
+
+  searchTimeout = setTimeout(() => {
+    fetch(`/api/search/${query}`)
+      .then(r => r.json())
+      .then(results => {
+        if (!results.length) {
+          resultsEl.style.display = 'none';
+          return;
+        }
+        listEl.innerHTML = results.map(r => `
+          <a href="/stock/${r.symbol}" style="
+            display:flex;align-items:center;justify-content:space-between;
+            background:white;border:0.5px solid var(--border);border-radius:8px;
+            padding:10px 14px;text-decoration:none;
+            transition:border-color 0.15s,transform 0.15s;
+          "
+          onmouseover="this.style.borderColor='#9FE1CB';this.style.transform='translateY(-1px)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'"
+          >
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);">${r.name}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:1px;">${r.symbol}</div>
+            </div>
+            <div style="font-size:11px;color:var(--green-dark);background:var(--green-light);padding:3px 8px;border-radius:4px;">View →</div>
+          </a>
+        `).join('');
+        resultsEl.style.display = 'block';
+      });
+  }, 300); // debounce 300ms so it doesn't spam the API
+}
+</script>
+</div>
+<!-- footer -->
+<div class="footer">
+  Made with love for Hackonomics 2026 · All trades are simulated · Data sourced from Finnhub
+</div>
+{% endblock %}

@@ -85,7 +85,7 @@
       <div class="sub">Active positions</div>
     </div>
     <div class="summary-card" style="border-color: {% if user.total_carbon_impact > 50 %}var(--red){% elif user.total_carbon_impact > 20 %}#f59e0b{% else %}var(--green){% endif %};">
-      <div class="lbl">☁️ Carbon Impact</div>
+      <div class="lbl">☁️ Footprint Score</div>
       <div class="val" style="color: {% if user.total_carbon_impact > 50 %}var(--red){% elif user.total_carbon_impact > 20 %}#f59e0b{% else %}var(--green){% endif %};">
         {{ "%.2f"|format(user.total_carbon_impact or 0) }}
       </div>

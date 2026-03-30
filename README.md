@@ -1,6 +1,6 @@
 # 🌿 Eco — ESG-Aware Stock Trading Simulator
 
-> Built for **Hackonomics 2026, EcoHack, and EcoHacks** · All trades are simulated · Data from Finnhub & yfinance
+> Inspired through **Hackonomics 2026, EcoHack, and EcoHacks** · All trades are simulated · Data from Finnhub & yfinance
 
 Hey there! Welcome to Eco's repository.
 Eco is a paper trading app that lets you invest a virtual $10,000 in real stocks — while tracking the environmental cost of your portfolio. Every buy you make adds to your **footprint score**, rewarding greener investment decisions.
@@ -37,7 +37,7 @@ Eco is a paper trading app that lets you invest a virtual $10,000 in real stocks
 eco/
 ├── app.py                  # Flask app — routes, DB models, buy/sell logic
 ├── models/
-│   └── esg_model.joblib    # Trained ESG prediction model (3 separate GBR models)
+│   └── esg_model_newest.joblib    # Trained ESG prediction model (3 separate GBR models)
 ├── services/
 │   ├── esg_data.py         # ESG scores + ML prediction logic
 │   └── stockdata.py        # Finnhub + yfinance data fetching

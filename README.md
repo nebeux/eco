@@ -3,7 +3,7 @@
 > Built for **Hackonomics 2026, EcoHack, and EcoHacks** · All trades are simulated · Data from Finnhub & yfinance
 
 Hey there! Welcome to Eco's repository.
-Eco is a paper trading app that lets you invest a virtual $10,000 in real stocks — while tracking the environmental cost of your portfolio. Every buy you make adds to your **carbon impact score**, rewarding greener investment decisions.
+Eco is a paper trading app that lets you invest a virtual $10,000 in real stocks — while tracking the environmental cost of your portfolio. Every buy you make adds to your **footprint score**, rewarding greener investment decisions.
 
 ---
 

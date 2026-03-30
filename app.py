@@ -17,7 +17,7 @@ app.secret_key = os.getenv('SECRET_KEY')
 API_KEY = os.getenv('FINNHUB_API_KEY')
 # ── database ──────────────────────────────────────────
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -25,7 +25,7 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id                  = db.Column(db.Integer, primary_key=True)
     username            = db.Column(db.String(80), unique=True, nullable=False)
-    password            = db.Column(db.String(120), nullable=False)
+    password            = db.Column(db.String(255), nullable=False)
     balance             = db.Column(db.Float, default=10000.0)
     total_carbon_impact = db.Column(db.Float, default=0.0)
 

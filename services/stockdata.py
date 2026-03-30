@@ -1,9 +1,13 @@
 import requests
 import time
 import yfinance as yf
+from pathlib import Path
 from datetime import datetime, timedelta
-
-API_KEY = "d73gq8pr01qjjol311a0d73gq8pr01qjjol311ag"
+import os
+from dotenv import load_dotenv
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+API_KEY = os.getenv('FINNHUB_API_KEY')
 BASE = "https://finnhub.io/api/v1"
 def get_company_profile(symbol):
     url = f"{BASE}/stock/profile2?symbol={symbol}&token={API_KEY}"

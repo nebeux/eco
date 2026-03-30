@@ -177,7 +177,7 @@ def stock(symbol):
 
         metrics = get_metrics(symbol)
         rec     = get_recommendations(symbol)
-        esg     = ESG_SCORES.get(symbol, {"environmental": 50, "social": 50, "governance": 50, "carbon": 50})
+        esg     = get_esg(symbol, profile.get('finnhubIndustry', 'Technology'))
 
         user    = get_current_user()
         holding = None

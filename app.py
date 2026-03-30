@@ -338,10 +338,6 @@ def sell():
     existing.shares   -= shares
     if existing.shares == 0:
         db.session.delete(existing)
-
-    db.session.flush()  # so recalc sees updated holdings
-    recalc_total_carbon(user)
-
     db.session.add(Transaction(user_id=user.id, symbol=symbol, shares=shares, price=price, type='sell'))
     db.session.commit()
     save_snapshot(user)

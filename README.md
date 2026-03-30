@@ -51,6 +51,7 @@ eco/
 │   └── leaderboard.html    # Leaderboard
 ├── static/
 │   ├── css/style.css
+|   ├── js/stock_trade.js
 │   └── js/main.js
 └── requirements.txt
 ```

@@ -206,7 +206,11 @@
   let sellSymbol = '';
   let sellMaxShares = 0;
   let currentPrices = {};
-
+  // refresh snapshot every 60 seconds while on portfolio page
+  fetch('/api/portfolio/snapshot', { method: 'POST' });
+setInterval(() => {
+  fetch('/api/portfolio/snapshot', { method: 'POST' });
+}, 60000);
   // helper: read a CSS variable from :root as a string
   function cssVar(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();

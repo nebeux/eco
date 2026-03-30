@@ -409,5 +409,12 @@ def sec_filings(symbol):
     url = f"https://finnhub.io/api/v1/stock/filings?symbol={symbol}&token={API_KEY}"
     data = requests.get(url).json()
     return jsonify(data[:6])
+
+@app.route('/api/portfolio/snapshot', methods=['POST'])
+@login_required
+def take_snapshot():
+    user = get_current_user()
+    save_snapshot(user)
+    return jsonify({'success': True})
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

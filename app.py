@@ -228,7 +228,6 @@ def leaderboard():
             'carbon':   carbon,
         })
     by_value  = sorted(board, key=lambda x: x['value'],  reverse=True)
-    by_carbon = sorted(board, key=lambda x: x['carbon'])
 
     # combined eco_score: 60% returns, 40% carbon (both normalised to 0-100)
     # carbon is inverted: lower impact = higher score
@@ -243,7 +242,7 @@ def leaderboard():
             e['eco_score'] = round(returns_norm * 0.6 + carbon_norm * 0.4, 1)
     by_overall = sorted(board, key=lambda x: x.get('eco_score', 0), reverse=True)
 
-    return render_template('leaderboard.html', by_value=by_value, by_carbon=by_carbon, by_overall=by_overall)
+    return render_template('leaderboard.html', by_value=by_value, by_overall=by_overall)
 
 # ── api: portfolio data ───────────────────────────────
 @app.route('/api/portfolio')

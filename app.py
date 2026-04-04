@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from services.stockdata import get_metrics, get_quote, get_company_profile, get_recommendations
 from services.stockdata import search_stocks as do_search
-from services.esg_data import STOCKS, ESG_SCORES, get_esg
+from services.esg_data import STOCKS, ESG_SCORES, get_esg, get_scope_data, normalize_sector
 from dotenv import load_dotenv
 
 app = Flask(__name__)
@@ -183,12 +183,15 @@ def stock(symbol):
         holding = None
         if user:
             holding = Holding.query.filter_by(user_id=user.id, symbol=symbol).first()
+        finnhub_industry = profile.get('finnhubIndustry', '')
+        sector = normalize_sector(finnhub_industry)
+        esg    = get_esg(symbol, sector)
+        scopes = get_scope_data(sector)
 
         return render_template('stock.html',
             symbol=symbol, profile=profile, quote=quote,
-            metrics=metrics, rec=rec, esg=esg,
-            holding=holding, balance=user.balance if user else None
-        )
+            metrics=metrics, rec=rec, esg=esg, scopes=scopes,
+            holding=holding, balance=user.balance if user else None)
     except ZeroDivisionError:
         flash(f'{symbol} returned invalid data. Please try another stock.', 'error')
         return redirect(url_for('stocks'))

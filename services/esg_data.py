@@ -11,7 +11,58 @@ Three separate models predict E, S, G independently:
 All inputs are fetched free via Finnhub (profile + metrics) and yfinance.
 Carbon score is derived as: round((E * 0.7 + G * 0.3))
 """
- 
+def normalize_sector(finnhub_industry):
+    """Map Finnhub industry strings to our sector keys."""
+    if not finnhub_industry:
+        return 'Technology'
+    
+    s = finnhub_industry.lower()
+    
+    if any(x in s for x in ['oil', 'gas', 'coal', 'petroleum', 'refin']):
+        return 'Oil & Gas'
+    if any(x in s for x in ['solar', 'wind', 'renewable', 'clean energy', 'enphase']):
+        return 'Clean Energy'
+    if any(x in s for x in ['electric util', 'utilities', 'power', 'nuclear', 'water']):
+        return 'Energy'
+    if any(x in s for x in ['software', 'tech', 'semiconductor', 'hardware', 'internet', 'data', 'cloud', 'it ', 'information']):
+        return 'Technology'
+    if any(x in s for x in ['auto', 'vehicle', 'motor', 'car', 'truck', 'electric vehicle']):
+        return 'Automotive'
+    if any(x in s for x in ['bank', 'financ', 'insurance', 'invest', 'asset', 'capital', 'credit', 'payment']):
+        return 'Finance'
+    if any(x in s for x in ['health', 'pharma', 'biotech', 'medical', 'hospital', 'drug', 'life science']):
+        return 'Healthcare'
+    if any(x in s for x in ['retail', 'consumer', 'food', 'beverage', 'restaurant', 'apparel', 'household']):
+        return 'Consumer'
+    if any(x in s for x in ['media', 'entertainment', 'film', 'music', 'broadcast', 'gaming', 'streaming']):
+        return 'Entertainment'
+    if any(x in s for x in ['aerospace', 'defense', 'military', 'weapon', 'security']):
+        return 'Defense'
+    if any(x in s for x in ['tobacco', 'cigarette']):
+        return 'Tobacco'
+    if any(x in s for x in ['real estate', 'reit', 'property']):
+        return 'Consumer'
+    if any(x in s for x in ['material', 'chemical', 'mining', 'metal', 'steel', 'construction']):
+        return 'Consumer'
+    
+    return 'Technology'  # safe default
+SCOPE_DATA = {
+    "Oil & Gas":    {"scope1": "Very High", "scope2": "High",     "scope3": "Very High", "net_zero": "2050", "renewables": "Low"},
+    "Clean Energy": {"scope1": "Very Low",  "scope2": "Very Low", "scope3": "Low",       "net_zero": "2035", "renewables": "100%"},
+    "Energy":       {"scope1": "Low",       "scope2": "Very Low", "scope3": "Low",       "net_zero": "2040", "renewables": "90%"},
+    "Technology":   {"scope1": "Low",       "scope2": "Low",      "scope3": "Moderate",  "net_zero": "2030", "renewables": "80%"},
+    "Automotive":   {"scope1": "Moderate",  "scope2": "Moderate", "scope3": "High",      "net_zero": "2040", "renewables": "40%"},
+    "Finance":      {"scope1": "Very Low",  "scope2": "Low",      "scope3": "High",      "net_zero": "2050", "renewables": "60%"},
+    "Healthcare":   {"scope1": "Low",       "scope2": "Moderate", "scope3": "Moderate",  "net_zero": "2045", "renewables": "50%"},
+    "Consumer":     {"scope1": "Moderate",  "scope2": "Moderate", "scope3": "High",      "net_zero": "2045", "renewables": "40%"},
+    "Entertainment":{"scope1": "Low",       "scope2": "Low",      "scope3": "Moderate",  "net_zero": "2040", "renewables": "70%"},
+    "Aerospace":    {"scope1": "High",      "scope2": "Moderate", "scope3": "High",      "net_zero": "2050", "renewables": "20%"},
+    "Defense":      {"scope1": "High",      "scope2": "Moderate", "scope3": "High",      "net_zero": "2050", "renewables": "20%"},
+    "Tobacco":      {"scope1": "Moderate",  "scope2": "Moderate", "scope3": "High",      "net_zero": "2050", "renewables": "30%"},
+}
+
+def get_scope_data(sector):
+    return SCOPE_DATA.get(sector, {"scope1": "Moderate", "scope2": "Moderate", "scope3": "Moderate", "net_zero": "2050", "renewables": "N/A"})
 import os
 import numpy as np
  

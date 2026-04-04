@@ -244,19 +244,19 @@
   <div class="right-col">
 
     <div class="carbon-side">
-      <div style="display:flex;align-items:center;margin-bottom:12px;">
-        <div class="carbon-side-title" style="margin-bottom:0;">Carbon Breakdown</div>
-        <button class="help-btn" onclick="toggleHelp('help-carbon')">?</button>
-      </div>
-      <div class="help-tooltip" id="help-carbon">
-        Carbon impact measures how much this company contributes to greenhouse gas emissions. Scope 1 is direct emissions from their own operations. Scope 2 comes from the energy they buy. Scope 3 covers their entire supply chain — often the biggest source for large companies. A higher score means lower carbon impact — better for the planet and your portfolio's environmental rating.
-      </div>
-      <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 1 (Direct)</span><span class="carbon-stat-val">Low</span></div>
-      <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 2 (Energy)</span><span class="carbon-stat-val">Very Low</span></div>
-      <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 3 (Supply chain)</span><span class="carbon-stat-val">Moderate</span></div>
-      <div class="carbon-stat-row"><span class="carbon-stat-label">Net Zero Target</span><span class="carbon-stat-val">2030</span></div>
-      <div class="carbon-stat-row"><span class="carbon-stat-label">Renewables Usage</span><span class="carbon-stat-val">High</span></div>
-    </div>
+  <div style="display:flex;align-items:center;margin-bottom:12px;">
+    <div class="carbon-side-title" style="margin-bottom:0;">Carbon Breakdown</div>
+    <button class="help-btn" onclick="toggleHelp('help-carbon')">?</button>
+  </div>
+  <div class="help-tooltip" id="help-carbon">
+    Carbon impact measures how much this company contributes to greenhouse gas emissions. Scope 1 is direct emissions from their own operations. Scope 2 comes from the energy they buy. Scope 3 covers their entire supply chain — often the biggest source for large companies. A higher score means lower carbon impact.
+  </div>
+  <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 1 (Direct)</span><span class="carbon-stat-val">{{ scopes.scope1 }}</span></div>
+  <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 2 (Energy)</span><span class="carbon-stat-val">{{ scopes.scope2 }}</span></div>
+  <div class="carbon-stat-row"><span class="carbon-stat-label">Scope 3 (Supply chain)</span><span class="carbon-stat-val">{{ scopes.scope3 }}</span></div>
+  <div class="carbon-stat-row"><span class="carbon-stat-label">Net Zero Target</span><span class="carbon-stat-val">{{ scopes.net_zero }}</span></div>
+  <div class="carbon-stat-row"><span class="carbon-stat-label">Renewables Usage</span><span class="carbon-stat-val">{{ scopes.renewables }}</span></div>
+</div>
 
     <div class="buy-panel">
       <div class="buy-panel-title">Trade {{ symbol }}</div>

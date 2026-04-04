@@ -226,6 +226,7 @@
       </div>
 
       {% if by_overall|length >= 1 %}
+      <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:1rem;">Podium</div>
       <div class="podium-wrap">
 
         {% if by_overall|length >= 2 %}
@@ -269,6 +270,7 @@
       {% endif %}
 
       {% if by_overall|length > 3 %}
+      <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:1rem;">Runner-ups</div>
       <div class="lb-card">
         <table class="lb-table">
           <thead>
@@ -359,7 +361,7 @@
       <div class="lb-card"><div class="lb-empty"><div class="icon">📭</div>No investors yet. Be the first!</div></div>
     {% else %}
 
-      <!-- podium: top 3 -->
+      <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:1rem;">Podium</div>
       {% if by_value|length >= 1 %}
       <div class="podium-wrap">
 
@@ -403,8 +405,8 @@
       </div>
       {% endif %}
 
-      <!-- rest of the table (rank 4+) -->
       {% if by_value|length > 3 %}
+      <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:1rem;">Runner-ups</div>
       <div class="lb-card">
         <table class="lb-table">
           <thead>
